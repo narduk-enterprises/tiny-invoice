@@ -15,6 +15,10 @@ const form = reactive({
   dryRun: true,
   maxBetUsd: 50,
   minSpreadPct: 1.0,
+  minConvictionPct: 75,
+  minVolume: 50000,
+  minLiquidity: 10000,
+  maxDailyTrades: 3,
 })
 
 // Sync incoming config to form
@@ -24,6 +28,10 @@ watch(config, (c) => {
     form.dryRun = c.dryRun ?? true
     form.maxBetUsd = c.maxBetUsd ?? 50
     form.minSpreadPct = c.minSpreadPct ?? 1.0
+    form.minConvictionPct = c.minConvictionPct ?? 75
+    form.minVolume = c.minVolume ?? 50000
+    form.minLiquidity = c.minLiquidity ?? 10000
+    form.maxDailyTrades = c.maxDailyTrades ?? 3
   }
 }, { immediate: true })
 
@@ -44,6 +52,10 @@ const saveConfig = async () => {
         dryRun: form.dryRun,
         maxBetUsd: form.maxBetUsd,
         minSpreadPct: form.minSpreadPct,
+        minConvictionPct: form.minConvictionPct,
+        minVolume: form.minVolume,
+        minLiquidity: form.minLiquidity,
+        maxDailyTrades: form.maxDailyTrades,
       }
     })
     await refresh()
@@ -69,7 +81,7 @@ const saveConfig = async () => {
       <div class="setting-card">
         <div class="setting-header">
           <h3>Bot Active</h3>
-          <p class="setting-desc">When active, the cron job scans for arbitrage every minute</p>
+          <p class="setting-desc">When active, the bot scans hourly and auto-trades if not in dry-run mode</p>
         </div>
         <div class="setting-control">
           <USwitch v-model="form.active" size="lg" />
@@ -117,11 +129,38 @@ const saveConfig = async () => {
         </div>
       </div>
 
+      <!-- Max Daily Trades -->
+      <div class="setting-card">
+        <div class="setting-header">
+          <h3>Max Daily Trades</h3>
+          <p class="setting-desc">Maximum number of trades per 24-hour window. Prevents over-trading.</p>
+        </div>
+        <div class="setting-control">
+          <div class="input-group">
+            <input
+              v-model.number="form.maxDailyTrades"
+              type="number"
+              min="1"
+              max="20"
+              step="1"
+              class="settings-input"
+            />
+            <span class="input-suffix">/ day</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanner Settings -->
+    <h2 class="section-title">Scanner Filters</h2>
+    <p class="section-desc">Controls which markets and opportunities the scanner will consider</p>
+
+    <div class="settings-grid">
       <!-- Min Spread Threshold -->
       <div class="setting-card">
         <div class="setting-header">
-          <h3>Min Spread Threshold</h3>
-          <p class="setting-desc">Only flag opportunities with a spread above this percentage</p>
+          <h3>Min Spread (Arbitrage)</h3>
+          <p class="setting-desc">Only flag arbitrage opportunities with a spread above this percentage</p>
         </div>
         <div class="setting-control">
           <div class="input-group">
@@ -137,6 +176,71 @@ const saveConfig = async () => {
           </div>
         </div>
       </div>
+
+      <!-- Min Conviction Threshold -->
+      <div class="setting-card">
+        <div class="setting-header">
+          <h3>Min Conviction (Prob. of Positive Return)</h3>
+          <p class="setting-desc">
+            Flag high-conviction opportunities when our formula estimates this probability of positive return. Considers market price, volume, liquidity, and time-to-resolution.
+          </p>
+        </div>
+        <div class="setting-control">
+          <div class="input-group">
+            <input
+              v-model.number="form.minConvictionPct"
+              type="number"
+              min="50"
+              max="99"
+              step="1"
+              class="settings-input"
+            />
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Min Volume -->
+      <div class="setting-card">
+        <div class="setting-header">
+          <h3>Min Market Volume</h3>
+          <p class="setting-desc">Skip markets with total trading volume below this threshold. Higher volume = more efficient pricing.</p>
+        </div>
+        <div class="setting-control">
+          <div class="input-group">
+            <span class="input-prefix">$</span>
+            <input
+              v-model.number="form.minVolume"
+              type="number"
+              min="0"
+              max="10000000"
+              step="10000"
+              class="settings-input"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Min Liquidity -->
+      <div class="setting-card">
+        <div class="setting-header">
+          <h3>Min Market Liquidity</h3>
+          <p class="setting-desc">Skip markets with available liquidity below this. Ensures clean entry/exit without slippage.</p>
+        </div>
+        <div class="setting-control">
+          <div class="input-group">
+            <span class="input-prefix">$</span>
+            <input
+              v-model.number="form.minLiquidity"
+              type="number"
+              min="0"
+              max="1000000"
+              step="5000"
+              class="settings-input"
+            />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Confirmation warning for live trading -->
@@ -148,7 +252,7 @@ const saveConfig = async () => {
           <p>This will execute real trades with real money on Polymarket. Make sure you have sufficient balance and understand the risks.</p>
         </div>
         <div class="confirm-actions">
-          <UButton color="red" @click="saveConfig">Yes, enable live trading</UButton>
+          <UButton color="error" @click="saveConfig">Yes, enable live trading</UButton>
           <UButton variant="ghost" @click="confirmLive = false; form.dryRun = true">Cancel</UButton>
         </div>
       </div>
@@ -191,6 +295,17 @@ const saveConfig = async () => {
   color: var(--text-secondary);
   margin: 0.25rem 0 0;
   font-size: 0.9rem;
+}
+
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0;
+}
+.section-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0.15rem 0 0;
 }
 
 /* ─── Settings Grid ─── */

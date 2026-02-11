@@ -19,13 +19,24 @@ export const markets = sqliteTable('markets', {
 // ─── Opportunities ──────────────────────────────────────────
 export const opportunities = sqliteTable('opportunities', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  marketId: text('market_id').notNull().references(() => markets.id),
+  marketId: text('market_id').notNull(), // market condition_id OR event_id (for multi-outcome)
   question: text('question').notNull(),
+  type: text('type').notNull().default('arbitrage'), // 'arbitrage' | 'high_conviction' | 'multi_outcome_arb' | 'tail_end_sweep'
   yesPrice: real('yes_price').notNull(),
   noPrice: real('no_price').notNull(),
   spread: real('spread').notNull(), // 1.0 - (yes + no), positive = arb exists
   expectedProfit: real('expected_profit').notNull(), // per $1 invested
+  conviction: real('conviction').notNull().default(0), // probability of dominant side (0-1)
+  dominantSide: text('dominant_side').notNull().default(''), // 'YES' or 'NO'
+  qualityScore: real('quality_score').default(0), // composite quality score
   traded: integer('traded', { mode: 'boolean' }).default(false),
+  // Multi-outcome arb fields
+  eventTitle: text('event_title'),
+  outcomeCount: integer('outcome_count'),
+  outcomesJson: text('outcomes_json'), // JSON array of { question, yesPrice }
+  // Tail-end sweep fields
+  annualizedReturn: real('annualized_return'),
+  daysToResolution: real('days_to_resolution'),
   detectedAt: text('detected_at').notNull().$defaultFn(() => new Date().toISOString()),
 })
 
@@ -53,6 +64,7 @@ export const scanLogs = sqliteTable('scan_logs', {
   tradesExecuted: integer('trades_executed').default(0),
   durationMs: integer('duration_ms').default(0),
   error: text('error'),
+  details: text('details'), // JSON blob with debug info (rejection breakdown, etc.)
   createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
 })
 
@@ -63,6 +75,10 @@ export const botConfig = sqliteTable('bot_config', {
   dryRun: integer('dry_run', { mode: 'boolean' }).default(true),
   maxBetUsd: real('max_bet_usd').default(50),
   minSpreadPct: real('min_spread_pct').default(1.0), // minimum spread % to trigger trade
+  minConvictionPct: real('min_conviction_pct').default(75), // minimum probability-of-positive-return %
+  minVolume: real('min_volume').default(50000), // minimum market volume in USD
+  minLiquidity: real('min_liquidity').default(10000), // minimum market liquidity in USD
+  maxDailyTrades: integer('max_daily_trades').default(3), // max trades per 24h
   startingBalance: real('starting_balance').default(1000),
   updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
 })

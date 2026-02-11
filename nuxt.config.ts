@@ -39,6 +39,7 @@ export default defineNuxtConfig({
     polymarketApiKey: process.env.POLYMARKET_API_KEY || '',
     polymarketSecret: process.env.POLYMARKET_SECRET || '',
     polymarketPassphrase: process.env.POLYMARKET_PASSPHRASE || '',
+    polymarketProxyAddress: process.env.POLYMARKET_PROXY_ADDRESS || '',
 
     public: {
       appUrl: process.env.SITE_URL || 'https://polymarket-arb.pages.dev',

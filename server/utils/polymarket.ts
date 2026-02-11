@@ -17,6 +17,49 @@ export interface PolymarketEvent {
   markets: PolymarketMarket[]
 }
 
+/**
+ * Fetch active events from the Gamma API.
+ * Events group multiple related markets (multi-outcome questions).
+ * Used for multi-outcome bundle arbitrage detection.
+ */
+export async function fetchActiveEvents(limit = 100): Promise<PolymarketEvent[]> {
+  const url = new URL(`${GAMMA_API}/events`)
+  url.searchParams.set('limit', String(limit))
+  url.searchParams.set('active', 'true')
+  url.searchParams.set('closed', 'false')
+  url.searchParams.set('order', 'volume')
+  url.searchParams.set('ascending', 'false')
+
+  const res = await fetch(url.toString(), {
+    headers: { 'Accept': 'application/json' }
+  })
+
+  if (!res.ok) {
+    throw new Error(`Gamma Events API error: ${res.status} ${res.statusText}`)
+  }
+
+  const data: PolymarketEvent[] = await res.json()
+
+  // Normalise JSON-encoded fields in each sub-market
+  for (const event of data) {
+    if (!event.markets) event.markets = []
+    for (const m of event.markets) {
+      if (typeof m.outcomes === 'string') {
+        try { m.outcomes = JSON.parse(m.outcomes) } catch { m.outcomes = [] }
+      }
+      if (typeof m.clobTokenIds === 'string') {
+        try { m.clobTokenIds = JSON.parse(m.clobTokenIds) } catch { m.clobTokenIds = [] }
+      }
+      if (typeof m.outcomePrices === 'string') {
+        try { m.outcomePrices = JSON.parse(m.outcomePrices) } catch { m.outcomePrices = [] }
+      }
+    }
+  }
+
+  // Only return events with 3+ markets (multi-outcome)
+  return data.filter(e => e.markets && e.markets.length >= 3)
+}
+
 export interface PolymarketMarket {
   id: string // condition_id
   question: string
@@ -46,7 +89,7 @@ export async function fetchActiveMarkets(limit = 200): Promise<PolymarketMarket[
   url.searchParams.set('limit', String(limit))
   url.searchParams.set('active', 'true')
   url.searchParams.set('closed', 'false')
-  url.searchParams.set('order', 'volume')
+  url.searchParams.set('order', 'volumeNum')
   url.searchParams.set('ascending', 'false')
 
   const res = await fetch(url.toString(), {
@@ -71,6 +114,9 @@ export async function fetchActiveMarkets(limit = 200): Promise<PolymarketMarket[
     if (typeof m.outcomePrices === 'string') {
       try { m.outcomePrices = JSON.parse(m.outcomePrices) } catch { m.outcomePrices = [] }
     }
+    // Gamma API returns volume and liquidity as strings — parse to numbers
+    if (typeof m.volume === 'string') m.volume = parseFloat(m.volume) || 0
+    if (typeof m.liquidity === 'string') m.liquidity = parseFloat(m.liquidity) || 0
   }
 
   // Filter to only binary markets (exactly 2 outcomes: Yes/No)

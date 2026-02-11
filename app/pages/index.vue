@@ -5,12 +5,14 @@ useSeoMeta({
 })
 
 const { data: stats, refresh: refreshStats } = await useFetch('/api/stats')
+const { data: portfolio, refresh: refreshPortfolio } = await useFetch('/api/portfolio')
 const { data: opps } = await useFetch('/api/opportunities', { query: { limit: 5 } })
 
 // Auto-refresh every 30s
 const refreshInterval = ref<any>(null)
+const refreshAll = () => { refreshStats(); refreshPortfolio() }
 onMounted(() => {
-  refreshInterval.value = setInterval(() => refreshStats(), 30_000)
+  refreshInterval.value = setInterval(refreshAll, 30_000)
 })
 onUnmounted(() => clearInterval(refreshInterval.value))
 
@@ -74,6 +76,41 @@ const formatTime = (iso: string) => {
 
     <!-- Stats cards -->
     <div class="stats-grid" v-if="stats">
+      <!-- Portfolio value card (hero) -->
+      <div class="stat-card stat-card--hero">
+        <div class="stat-label">
+          Portfolio Value
+          <span v-if="portfolio?.status === 'connected'" class="status-dot status-dot--live" title="Live from Polymarket"></span>
+          <span v-else-if="portfolio?.status === 'disconnected'" class="status-dot status-dot--off" title="Not connected"></span>
+          <span v-else class="status-dot status-dot--err" title="API error"></span>
+        </div>
+        <template v-if="portfolio?.status === 'connected' && portfolio.portfolioValue != null">
+          <div class="stat-value stat-value--lg" :class="stats.netPnl >= 0 ? 'stat-value--green' : 'stat-value--red'">
+            ${{ portfolio.portfolioValue.toFixed(2) }}
+          </div>
+          <div class="portfolio-meta">
+            <span class="text-muted" v-if="portfolio.positionCount">{{ portfolio.positionCount }} positions</span>
+            <span :class="stats.netPnl >= 0 ? 'text-green' : 'text-red'">
+              PnL: {{ formatPnl(stats.netPnl) }}
+            </span>
+            <span class="text-muted" v-if="stats.totalTrades">
+              {{ stats.winCount }}W / {{ stats.lossCount }}L
+            </span>
+          </div>
+        </template>
+        <template v-else-if="portfolio?.status === 'disconnected'">
+          <div class="stat-value stat-value--lg stat-value--muted">Not Connected</div>
+          <div class="portfolio-meta">
+            <span class="text-muted">{{ portfolio.reason }}</span>
+          </div>
+        </template>
+        <template v-else>
+          <div class="stat-value stat-value--lg stat-value--muted">{{ portfolio?.portfolioValue != null ? `$${portfolio.portfolioValue.toFixed(2)}` : 'Unavailable' }}</div>
+          <div class="portfolio-meta">
+            <span class="text-muted">{{ portfolio?.reason || 'Loading...' }}</span>
+          </div>
+        </template>
+      </div>
       <div class="stat-card">
         <div class="stat-label">Total Scans</div>
         <div class="stat-value">{{ stats.totalScans }}</div>
@@ -238,6 +275,23 @@ const formatTime = (iso: string) => {
   border-color: var(--border-accent);
   background: var(--bg-card-hover);
 }
+.stat-card--hero {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(99, 102, 241, 0.06) 100%);
+  border-color: var(--border-accent);
+}
+
+.stat-value--lg {
+  font-size: 2rem;
+}
+
+.portfolio-meta {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+}
 
 .stat-label {
   font-size: 0.75rem;
@@ -260,6 +314,7 @@ const formatTime = (iso: string) => {
 .stat-value--accent { color: var(--accent-light); }
 .stat-value--green { color: var(--green); }
 .stat-value--red { color: var(--red); }
+.stat-value--muted { color: var(--text-muted); font-size: 1.2rem; }
 
 /* ─── Status badges ─── */
 .status-badge {
@@ -273,6 +328,28 @@ const formatTime = (iso: string) => {
 .status-badge--paused { background: var(--yellow-bg); color: var(--yellow); }
 .status-badge--dry { background: rgba(99, 102, 241, 0.1); color: var(--accent-light); }
 .status-badge--live { background: var(--red-bg); color: var(--red); }
+
+/* ─── Status dots (portfolio connection) ─── */
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.status-dot--live {
+  background: var(--green);
+  box-shadow: 0 0 4px var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.status-dot--off { background: var(--text-muted); }
+.status-dot--err { background: var(--red); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 
 /* ─── Section card ─── */
 .section-card {

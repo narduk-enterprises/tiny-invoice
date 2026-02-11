@@ -10,6 +10,7 @@ const isDark = computed({
 const navItems = [
   { label: 'Dashboard', to: '/', icon: 'i-heroicons-chart-bar-square' },
   { label: 'Opportunities', to: '/opportunities', icon: 'i-heroicons-bolt' },
+  { label: 'Scan Logs', to: '/scan-logs', icon: 'i-heroicons-document-magnifying-glass' },
   { label: 'Trades', to: '/trades', icon: 'i-heroicons-arrows-right-left' },
   { label: 'Settings', to: '/settings', icon: 'i-heroicons-cog-6-tooth' },
 ]
