@@ -287,7 +287,7 @@ async function runPosthogSetupOrSkip(): Promise<boolean> {
   console.log()
   console.log('  ⚠️  PostHog: POSTHOG_PUBLIC_KEY not set.')
   console.log('      To use the shared Narduk Analytics project, bind the key from the Hub:')
-  console.log('      doppler secrets set POSTHOG_PUBLIC_KEY="\\${doppler.project.narduk-analytics.config.prd.secret.POSTHOG_PROJECT_TOKEN}"')
+  console.log('      doppler secrets set POSTHOG_PUBLIC_KEY="\\\\${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}" --project YOUR_PROJECT --config prd')
   console.log()
   return false
 }

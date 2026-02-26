@@ -4,19 +4,26 @@ import { execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 /**
- * INIT.TS — Nuxt v4 Template Initialization Script
- * ----------------------------------------------------
+ * INIT.TS — Nuxt v4 Template Initialization Script (Idempotent)
+ * ----------------------------------------------------------------
  * Automates the transformation of a fresh `nuxt-v4-template` clone into a ready-to-deploy app.
+ * Safe to re-run — all steps check for existing state before making changes.
  * 
  * Usage:
- * npm run init -- --name="my-app" --display="My App Name" --url="https://myapp.com"
+ *   npm run init -- --name="my-app" --display="My App Name" --url="https://myapp.com"
+ * 
+ * Re-run (repair mode — skip string replacement and README):
+ *   npm run init -- --name="my-app" --display="My App Name" --url="https://myapp.com" --repair
  * 
  * What this does:
- * 1. Safely finds and replaces all boilerplate strings (app names, URLs) in the codebase.
- * 2. Runs `npx wrangler d1 create <app-name>-db` to provision the Cloudflare database.
- * 3. Rewrites `wrangler.json` with the newly provisioned D1 database ID.
- * 4. Demolishes the boilerplate README and creates a fresh, app-specific README.
- * 5. Removes this script itself to prevent accidental re-runs.
+ * 1. Safely finds and replaces all boilerplate strings (skipped in --repair mode)
+ * 2. Provisions the Cloudflare D1 database (skips if exists)
+ * 3. Rewrites `wrangler.json` with the D1 database ID
+ * 4. Resets README.md (skipped in --repair mode)
+ * 5. Provisions Doppler project and syncs hub secrets (additive only)
+ * 6. Sets Doppler CI token on GitHub (skips if token exists)
+ * 7. Runs analytics provisioning pipeline (each service skips if configured)
+ * 8. Done — script is kept for future re-runs
  */
 
 // --- 1. Argument Parsing ---
@@ -39,6 +46,9 @@ if (missingArgs.length > 0) {
   console.error('Usage example:')
   console.error('  npm run init -- --name="narduk-enterprises" --display="Narduk Enterprises" --url="https://nard.uk"')
   console.error()
+  console.error('Re-run (repair infra only):')
+  console.error('  npm run init -- --name="narduk-enterprises" --display="Narduk Enterprises" --url="https://nard.uk" --repair')
+  console.error()
   console.error('Please provide: --name, --display, and --url')
   process.exit(1)
 }
@@ -46,6 +56,7 @@ if (missingArgs.length > 0) {
 const APP_NAME = args.name as string
 const DISPLAY_NAME = args.display as string
 const SITE_URL = (args.url as string).replace(/\/$/, '') // strip trailing slash
+const REPAIR_MODE = !!args.repair
 
 // Boilerplate targets to replace
 const REPLACEMENTS = [
@@ -82,33 +93,50 @@ async function walkDir(dir: string): Promise<string[]> {
   return files
 }
 
+/** Get existing Doppler secret names for a project/config. */
+function getDopplerSecretNames(project: string, config: string): Set<string> {
+  try {
+    const output = execSync(
+      `doppler secrets --project ${project} --config ${config} --only-names --plain`,
+      { encoding: 'utf-8', stdio: 'pipe' }
+    )
+    return new Set(output.trim().split('\n').filter(Boolean))
+  } catch {
+    return new Set()
+  }
+}
+
 // --- execution ---
 
 async function main() {
-  console.log(`\n🚀 Initializing: ${DISPLAY_NAME} (${APP_NAME})`)
+  console.log(`\n🚀 Initializing: ${DISPLAY_NAME} (${APP_NAME})${REPAIR_MODE ? ' [REPAIR MODE]' : ''}`)
   
   // 1. Recursive String Replacement
-  console.log('\nStep 1/8: Replacing boilerplate strings...')
-  const files = await walkDir(ROOT_DIR)
-  let changedFiles = 0
+  if (REPAIR_MODE) {
+    console.log('\nStep 1/8: Replacing boilerplate strings... ⏭ skipped (--repair)')
+  } else {
+    console.log('\nStep 1/8: Replacing boilerplate strings...')
+    const files = await walkDir(ROOT_DIR)
+    let changedFiles = 0
 
-  for (const file of files) {
-    // Specifically skip this init script so we don't dynamically break the replacements
-    if (file.endsWith('tools/init.ts')) continue
+    for (const file of files) {
+      // Specifically skip this init script so we don't dynamically break the replacements
+      if (file.endsWith('tools/init.ts')) continue
 
-    const original = await fs.readFile(file, 'utf-8')
-    let content = original
+      const original = await fs.readFile(file, 'utf-8')
+      let content = original
 
-    for (const r of REPLACEMENTS) {
-      content = content.replace(r.from, r.to)
+      for (const r of REPLACEMENTS) {
+        content = content.replace(r.from, r.to)
+      }
+
+      if (original !== content) {
+        await fs.writeFile(file, content, 'utf-8')
+        changedFiles++
+      }
     }
-
-    if (original !== content) {
-      await fs.writeFile(file, content, 'utf-8')
-      changedFiles++
-    }
+    console.log(`  ✅ Updated ${changedFiles} files.`)
   }
-  console.log(`  ✅ Updated ${changedFiles} files.`)
 
   // 2. Database Provisioning
   console.log('\nStep 2/8: Provisioning D1 Database...')
@@ -122,7 +150,7 @@ async function main() {
   } catch (error: any) {
     const stderr = error.stderr || ''
     if (stderr.includes('already exists')) {
-      console.log(`  ⚠️ Database ${dbName} already exists.`)
+      console.log(`  ⏭ Database ${dbName} already exists.`)
       // Try to fetch existing DB info
       try {
         d1Output = execSync(`npx wrangler d1 info ${dbName}`, { encoding: 'utf-8', stdio: 'pipe' })
@@ -175,8 +203,11 @@ async function main() {
   }
 
   // 4. Reset README
-  console.log('\nStep 4/8: Resetting README.md...')
-  const readmeContent = `# ${DISPLAY_NAME}
+  if (REPAIR_MODE) {
+    console.log('\nStep 4/8: Resetting README.md... ⏭ skipped (--repair)')
+  } else {
+    console.log('\nStep 4/8: Resetting README.md...')
+    const readmeContent = `# ${DISPLAY_NAME}
 
 **${APP_NAME}** — initialized from \`nuxt-v4-template\`.
 
@@ -193,55 +224,91 @@ async function main() {
 
 Pushes to \`main\` are automatically built and deployed via the GitHub Actions CI/CD workflows utilizing \`npm run deploy\`.
 `
-  await fs.writeFile(path.join(ROOT_DIR, 'README.md'), readmeContent, 'utf-8')
-  console.log(`  ✅ Generated fresh README.`)
+    await fs.writeFile(path.join(ROOT_DIR, 'README.md'), readmeContent, 'utf-8')
+    console.log(`  ✅ Generated fresh README.`)
+  }
 
-  // 5. Doppler Registration
+  // 5. Doppler Registration (additive — won't clobber existing secrets)
   console.log('\nStep 5/8: Provisioning Doppler Project...')
   console.log(`  Running: doppler projects create ${APP_NAME}`)
   try {
     execSync(`doppler projects create ${APP_NAME} --description "${DISPLAY_NAME} auto-provisioned"`, { encoding: 'utf-8', stdio: 'pipe' })
     console.log(`  ✅ Doppler project created: ${APP_NAME}`)
-    
-    // Bind core cross-project keys
-    execSync(`doppler secrets set CLOUDFLARE_API_TOKEN='\${narduk-enterprise-apps.prd.CLOUDFLARE_API_TOKEN}' CLOUDFLARE_ACCOUNT_ID='\${narduk-enterprise-apps.prd.CLOUDFLARE_ACCOUNT_ID}' POSTHOG_PUBLIC_KEY='\${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}' POSTHOG_HOST='\${narduk-analytics.prd.POSTHOG_HOST}' --project ${APP_NAME} --config prd`, { stdio: 'pipe' })
-    console.log(`  ✅ Synced Cloudflare & PostHog core credentials.`)
   } catch (error: any) {
     const stderr = error.stderr || ''
     if (stderr.includes('already exists')) {
-      console.log(`  ⚠️ Doppler project ${APP_NAME} already exists.`)
+      console.log(`  ⏭ Doppler project ${APP_NAME} already exists.`)
     } else {
       console.warn(`  ⚠️ Doppler creation failed: ${stderr || error.message}`)
     }
   }
 
-  // 6. Doppler Service Token → GitHub Secret
-  console.log('\nStep 6/8: Adding Doppler token to GitHub repository...')
+  // Only set hub references for keys that aren't already configured
   try {
-    // Generate a Doppler service token for CI/CD
-    const dopplerToken = execSync(
-      `doppler configs tokens create ci-deploy --project ${APP_NAME} --config prd --plain`,
-      { encoding: 'utf-8', stdio: 'pipe' }
-    ).trim()
-
-    if (!dopplerToken) {
-      throw new Error('Doppler returned an empty token.')
+    const existing = getDopplerSecretNames(APP_NAME, 'prd')
+    const hubSecrets: Record<string, string> = {
+      CLOUDFLARE_API_TOKEN: '${narduk-enterprise-apps.prd.CLOUDFLARE_API_TOKEN}',
+      CLOUDFLARE_ACCOUNT_ID: '${narduk-enterprise-apps.prd.CLOUDFLARE_ACCOUNT_ID}',
+      POSTHOG_PUBLIC_KEY: '${narduk-analytics.prd.POSTHOG_PUBLIC_KEY}',
+      POSTHOG_HOST: '${narduk-analytics.prd.POSTHOG_HOST}',
     }
 
-    // Upload to GitHub as a repository secret via gh CLI
-    execSync(`gh secret set DOPPLER_TOKEN --body "${dopplerToken}"`, { encoding: 'utf-8', stdio: 'pipe' })
-    console.log(`  ✅ DOPPLER_TOKEN set as GitHub Actions secret.`)
+    const toSet = Object.entries(hubSecrets)
+      .filter(([key]) => !existing.has(key))
+      .map(([key, val]) => `${key}='${val}'`)
+
+    if (toSet.length > 0) {
+      execSync(`doppler secrets set ${toSet.join(' ')} --project ${APP_NAME} --config prd`, { stdio: 'pipe' })
+      console.log(`  ✅ Synced ${toSet.length} hub credentials: ${toSet.map(s => s.split('=')[0]).join(', ')}`)
+    } else {
+      console.log(`  ⏭ All core credentials already configured.`)
+    }
+  } catch (error: any) {
+    console.warn(`  ⚠️ Failed to sync hub credentials: ${error.message}`)
+  }
+
+  // 6. Doppler Service Token → GitHub Secret (skip if token exists)
+  console.log('\nStep 6/8: Adding Doppler token to GitHub repository...')
+  try {
+    // Check if ci-deploy token already exists
+    let tokenExists = false
+    try {
+      const tokensOutput = execSync(
+        `doppler configs tokens --project ${APP_NAME} --config prd --plain`,
+        { encoding: 'utf-8', stdio: 'pipe' }
+      )
+      tokenExists = tokensOutput.includes('ci-deploy')
+    } catch {
+      // If listing fails, proceed with creation attempt
+    }
+
+    if (tokenExists) {
+      console.log(`  ⏭ ci-deploy token already exists. Skipping to avoid invalidating active CI token.`)
+    } else {
+      const dopplerToken = execSync(
+        `doppler configs tokens create ci-deploy --project ${APP_NAME} --config prd --plain`,
+        { encoding: 'utf-8', stdio: 'pipe' }
+      ).trim()
+
+      if (!dopplerToken) {
+        throw new Error('Doppler returned an empty token.')
+      }
+
+      // Upload to GitHub as a repository secret via gh CLI
+      execSync(`gh secret set DOPPLER_TOKEN --body "${dopplerToken}"`, { encoding: 'utf-8', stdio: 'pipe' })
+      console.log(`  ✅ DOPPLER_TOKEN set as GitHub Actions secret.`)
+    }
   } catch (error: any) {
     const stderr = error.stderr || error.message || ''
     if (stderr.includes('token') && stderr.includes('already exists')) {
-      console.log(`  ⚠️ Doppler CI token already exists. Skipping.`)
+      console.log(`  ⏭ Doppler CI token already exists. Skipping.`)
     } else {
       console.warn(`  ⚠️ Failed to set DOPPLER_TOKEN on GitHub: ${stderr}`)
       console.warn('  Ensure you are logged into gh (gh auth login) and have a git remote set.')
     }
   }
 
-  // 7. Analytics Provisioning
+  // 7. Analytics Provisioning (each service internally skips if already configured)
   console.log('\nStep 7/8: Bootstrapping Google Analytics & IndexNow...')
   try {
     const toolsDir = path.join(ROOT_DIR, 'tools')
@@ -267,39 +334,13 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
     console.warn(`  ⚠️ Failed to execute analytics pipeline: ${error.message}`)
   }
 
-  // 8. Cleanup
-  console.log('\nStep 8/8: Self-Destruct Sequence...')
-  // Remove this script
-  await fs.unlink(path.join(ROOT_DIR, 'tools', 'init.ts'))
-  // Attempt to remove tools directory if empty
-  try {
-    const remainingTools = await fs.readdir(path.join(ROOT_DIR, 'tools'))
-    if (remainingTools.length === 0) {
-      await fs.rmdir(path.join(ROOT_DIR, 'tools'))
-    }
-  } catch (_e) {
-    // ignore
-  }
+  // 8. Done (script is kept for re-runs)
+  console.log('\nStep 8/8: Complete!')
+  console.log('  ℹ️  init.ts is kept for re-runs. Use --repair to re-run infra steps only.')
 
-  // Remove the initialize command from package.json
-  try {
-    const pkgPath = path.join(ROOT_DIR, 'package.json')
-    const pkgStr = await fs.readFile(pkgPath, 'utf-8')
-    const pkg = JSON.parse(pkgStr)
-    if (pkg.scripts && pkg.scripts.init) {
-      delete pkg.scripts.init
-      await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
-    }
-  } catch (_e) {
-    // ignore
-  }
-
-  console.log(`  ✅ Removed initialization script and command.`)
-
-
-  console.log('\\n🎉 Project initialization complete!')
-  console.log('\\nNext steps:')
-  console.log(`  1. Setup Doppler secrets (review AGENTS.md format)`)
+  console.log('\n🎉 Project initialization complete!')
+  console.log('\nNext steps:')
+  console.log(`  1. Review Doppler secrets: doppler secrets --project ${APP_NAME} --config prd`)
   console.log(`  2. doppler setup && npm run db:migrate`)
   console.log(`  3. git add . && git commit -m "chore: initialize project"`)
   console.log()
