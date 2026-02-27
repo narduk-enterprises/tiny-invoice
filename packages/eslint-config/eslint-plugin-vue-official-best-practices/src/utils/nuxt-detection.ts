@@ -14,7 +14,7 @@ let cacheKey: string | null = null
  * Caches result per working directory
  */
 export function isNuxtMode(context: RuleContext<string, any[]>): boolean {
-  const cwd = context.getCwd()
+  const cwd = context.cwd ?? (context as any).getCwd?.()
   
   // Use cache if same directory
   if (cacheKey === cwd && nuxtCache !== null) {

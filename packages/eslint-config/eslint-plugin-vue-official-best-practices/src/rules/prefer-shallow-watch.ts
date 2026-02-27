@@ -62,7 +62,7 @@ export default {
           
           if (hasDeep) {
             // Check for suppression comment
-            const sourceCode = context.getSourceCode()
+            const sourceCode = context.sourceCode ?? (context as any).getSourceCode()
             const comments = sourceCode.getCommentsBefore(node)
             
             const hasSuppression = comments.some((comment: any) =>

@@ -21,8 +21,8 @@ export default {
     },
   },
   create(context: Rule.RuleContext<string, any[]>): Rule.RuleListener {
-    const filename = context.getFilename()
-    const parserServices = context.parserServices as any
+    const filename = context.filename ?? (context as any).getFilename?.() ?? ''
+    const parserServices = (context.sourceCode?.parserServices ?? (context as any).parserServices) as any
     
     // Skip client-only files
     if (filename.includes('.client.') || filename.includes('.client/')) {

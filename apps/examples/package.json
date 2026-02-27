@@ -19,6 +19,7 @@
     "init": "jiti ../../tools/init.ts"
   },
   "dependencies": {
+    "@narduk/eslint-config": "workspace:*",
     "nuxt": "^4.3.1"
   },
   "devDependencies": {

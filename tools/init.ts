@@ -409,7 +409,7 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
   console.log('\n🎉 Project initialization complete!')
   console.log('\nNext steps:')
   console.log(`  1. Review Doppler secrets: doppler secrets --project ${APP_NAME} --config prd`)
-  console.log(`  2. doppler setup && npm run db:migrate`)
+  console.log(`  2. doppler setup --project ${APP_NAME} --config dev && npm run db:migrate`)
   console.log(`  3. git add . && git commit -m "chore: initialize project"`)
   console.log()
 }

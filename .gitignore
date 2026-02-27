@@ -42,4 +42,5 @@ tools/eslint-plugin-vue-official-best-practices/dist/
 *-secrets.json
 *.jsonl
 doppler.json
+doppler.yaml
 lint-results.txt

@@ -1,3 +1,43 @@
+<script setup lang="ts">
+import type { NuxtError } from '#app'
+
+const props = defineProps<{
+  error: NuxtError
+}>()
+
+const title = computed(() => {
+  const code = props.error?.statusCode
+  if (code === 404) return 'Page not found'
+  if (code === 403) return 'Access denied'
+  if (code === 401) return 'Not authenticated'
+  return 'Something went wrong'
+})
+
+const description = computed(() => {
+  const code = props.error?.statusCode
+  if (code === 404) return "The page you're looking for doesn't exist or has been moved."
+  if (code === 403) return "You don't have permission to access this resource."
+  if (code === 401) return 'Please sign in to access this page.'
+  return 'An unexpected error occurred. Please try again later.'
+})
+
+function handleError() {
+  clearError({ redirect: '/' })
+}
+
+function refreshPage() {
+  clearError()
+  if (import.meta.client) {
+    window.location.reload()
+  }
+}
+
+useSeoMeta({
+  title: `${props.error?.statusCode || 'Error'} — ${title.value}`,
+  robots: 'noindex, nofollow',
+})
+</script>
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-default px-4">
     <div class="text-center max-w-md">
@@ -38,43 +78,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import type { NuxtError } from '#app'
-
-const props = defineProps<{
-  error: NuxtError
-}>()
-
-const title = computed(() => {
-  const code = props.error?.statusCode
-  if (code === 404) return 'Page not found'
-  if (code === 403) return 'Access denied'
-  if (code === 401) return 'Not authenticated'
-  return 'Something went wrong'
-})
-
-const description = computed(() => {
-  const code = props.error?.statusCode
-  if (code === 404) return "The page you're looking for doesn't exist or has been moved."
-  if (code === 403) return "You don't have permission to access this resource."
-  if (code === 401) return 'Please sign in to access this page.'
-  return 'An unexpected error occurred. Please try again later.'
-})
-
-function handleError() {
-  clearError({ redirect: '/' })
-}
-
-function refreshPage() {
-  clearError()
-  if (import.meta.client) {
-    window.location.reload()
-  }
-}
-
-useSeoMeta({
-  title: `${props.error?.statusCode || 'Error'} — ${title.value}`,
-  robots: 'noindex, nofollow',
-})
-</script>

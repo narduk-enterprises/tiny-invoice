@@ -166,7 +166,7 @@ function isTopLevel(node) {
 var nuxtCache = null;
 var cacheKey = null;
 function isNuxtMode(context) {
-  const cwd = context.getCwd();
+  const cwd = context.cwd ?? context.getCwd?.();
   if (cacheKey === cwd && nuxtCache !== null) {
     return nuxtCache;
   }
@@ -385,7 +385,7 @@ var prefer_shallow_watch_default = {
             return key === "deep" && prop.value?.value === true;
           });
           if (hasDeep) {
-            const sourceCode = context.getSourceCode();
+            const sourceCode = context.sourceCode ?? context.getSourceCode();
             const comments = sourceCode.getCommentsBefore(node);
             const hasSuppression = comments.some(
               (comment) => comment.value.includes("vue-official allow-deep-watch")
@@ -1132,7 +1132,7 @@ var pinia_prefer_storeToRefs_destructure_default = {
             if (init.callee.name === "storeToRefs" || init.callee.type === "MemberExpression" && init.callee.property && init.callee.property.name === "storeToRefs") {
               return;
             }
-            const sourceCode = context.getSourceCode();
+            const sourceCode = context.sourceCode ?? context.getSourceCode();
             const storeCallText = sourceCode.getText(init);
             context.report({
               node,

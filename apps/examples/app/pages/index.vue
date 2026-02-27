@@ -1,3 +1,10 @@
+<script setup lang="ts">
+useSeo({
+  title: 'Welcome to the Nuxt 4 Template',
+  description: 'Your scalable foundation for everything.',
+})
+</script>
+
 <template>
   <UPage>
     <UPageHero
@@ -17,10 +24,3 @@
     </UPageHero>
   </UPage>
 </template>
-
-<script setup lang="ts">
-useSeo({
-  title: 'Welcome to the Nuxt 4 Template',
-  description: 'Your scalable foundation for everything.',
-})
-</script>

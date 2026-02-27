@@ -286,8 +286,8 @@ var no_ssr_dom_access_default = {
     }
   },
   create(context) {
-    const filename = context.getFilename();
-    const parserServices = context.parserServices;
+    const filename = context.filename ?? context.getFilename?.() ?? "";
+    const parserServices = context.sourceCode?.parserServices ?? context.parserServices;
     if (filename.includes(".client.") || filename.includes(".client/")) {
       return {};
     }
