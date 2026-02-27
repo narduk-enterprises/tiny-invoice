@@ -6,7 +6,6 @@
 
 import type { RuleContext, RuleListener } from 'eslint'
 import { VUE_COMPOSITION_API } from '../utils/vue-docs-urls'
-import { isTopLevel } from '../utils/ast-utils'
 
 const VUE_COMPOSABLES = [
   'ref',

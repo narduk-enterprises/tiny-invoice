@@ -19,7 +19,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 execute nuxt-v4-template-db --local --file=drizzle/0000_initial_schema.sql",
     "db:studio": "drizzle-kit studio",
-    "init": "npx jiti tools/init.ts"
+    "init": "npx jiti tools/init.ts",
+    "validate": "npx jiti tools/validate.ts"
   },
   "dependencies": {
     "@nuxt/image": "^2.0.0",
