@@ -1,8 +1,8 @@
 ---
-description: Audit Tailwind v4 CSS import order, token usage, and deprecated patterns
+description: Audit Tailwind v4 CSS import order, token usage, and Nuxt UI v4 compliance
 ---
 
-This workflow enforces Tailwind CSS v4 and Nuxt UI 4 styling standards. Incorrect import order is the #1 cause of completely unstyled Nuxt UI components.
+This workflow enforces Tailwind CSS v4 and Nuxt UI 4 styling standards. Incorrect import order is the #1 cause of completely unstyled Nuxt UI components. It also ensures the codebase correctly uses modern styling primitives and avoids deprecated patterns.
 
 1. **Verify `main.css` import order**
    - The import order MUST be: (1) Google Fonts `@import url(...)`, (2) `@import 'tailwindcss'`, (3) `@import '@nuxt/ui'`. Getting this wrong causes all Nuxt UI components to render unstyled.
@@ -29,8 +29,23 @@ This workflow enforces Tailwind CSS v4 and Nuxt UI 4 styling standards. Incorrec
        // turbo
        `grep -rn "flex-shrink-\|flex-grow-\|bg-gradient-to-" app/ 2>/dev/null || echo "No deprecated TW3 classes found (pass)"`
 
-5. **Check for hardcoded color values**
+5. **Check for hardcoded color values and generic Tailwind color usage**
    - Templates should use Nuxt UI design tokens (`primary`, `neutral`, etc.) and Tailwind theme colors, not hardcoded hex/rgb values in templates.
      // turbo
      `grep -rn "color: #\|color: rgb\|bg-\[#" app/components/ app/pages/ 2>/dev/null | head -15 || echo "No hardcoded colors found (pass)"`
    - A few exceptions are acceptable (e.g., `theme-color` meta tag), but component styling should always use tokens.
+   - Nuxt UI 4 uses design tokens. Ensure buttons, badges, and alerts are using `color="primary"` or `color="neutral"` instead of arbitrary generic colors unless specifically configured in `app.config.ts`.
+
+6. **Check for `UDivider`**
+   - Ensure `UDivider` is not used anywhere in `app/`. It has been renamed to `USeparator` in v4.
+     // turbo
+     `grep -rn "UDivider" app/ 2>/dev/null || echo "No UDivider found (pass)"`
+   - If found, replace with `USeparator`.
+
+7. **Check for correct icon syntax**
+   - Nuxt UI 4 and Nuxt Icon strongly prefer the `i-` prefix syntax (e.g., `i-lucide-home`).
+     // turbo
+     `grep -rn "name=\"heroicons" app/ 2>/dev/null || echo "No old heroicons found (pass)"`
+
+8. **Review `app.config.ts`**
+   - Verify that the UI configuration is correctly structured for v4 (e.g., configuring `primary` and `neutral` under `ui.colors`).

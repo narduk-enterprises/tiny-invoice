@@ -53,7 +53,7 @@ export default {
             }
             
             // Warn and provide fix
-            const sourceCode = context.getSourceCode()
+            const sourceCode = context.sourceCode ?? (context as any).getSourceCode()
             const storeCallText = sourceCode.getText(init)
             
             context.report({

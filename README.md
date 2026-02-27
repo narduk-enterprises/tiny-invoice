@@ -61,11 +61,11 @@ This template uses **Doppler** as the single source of truth for all secrets and
 
 ```bash
 doppler projects create <app-name>
-doppler setup
+doppler setup --project <app-name> --config dev
 doppler run -- pnpm run dev
 ```
 
-All `runtimeConfig` keys in `nuxt.config.ts` auto-map from Doppler via the `NUXT_` prefix convention.
+All `runtimeConfig` keys in `nuxt.config.ts` are populated via direct `process.env.KEY` references mapped from Doppler.
 
 ---
 

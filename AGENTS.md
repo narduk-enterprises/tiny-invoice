@@ -146,9 +146,9 @@ These are opt-in feature recipes. Follow them when the project needs a specific 
    ```
    _(This will rename the project, create the Cloudflare D1 database, spin up the Doppler project, rewrite `wrangler.json`, and then self-destruct.)_
 2. Configure your Doppler secrets (see Secrets & Env below).
-3. Pull Doppler secrets and initialize the local database schema:
+3. Pull Doppler secrets and initialize the local database schema (non-interactive):
    ```bash
-   doppler setup && npm run db:migrate
+   doppler setup --project <app-name> --config dev && npm run db:migrate
    ```
 4. Commit the initialization.
 
@@ -158,36 +158,82 @@ These are opt-in feature recipes. Follow them when the project needs a specific 
 
 **When:** Always. This is the standard for all projects.
 
-**Principle:** Doppler is the single source of truth for all secrets and environment variables. **Never** create `.env` or `.env.example` files. Never commit secrets.
+**Principle:** Doppler is the single source of truth for all secrets and environment variables. **Never** create `.env` or `.env.example` files. Never commit secrets. Never commit `doppler.yaml` (it is git-ignored).
 
 **Steps:**
 
 1. Create a Doppler project: `doppler projects create <app-name>`
-2. Wire Doppler into your dev workflow:
+2. Wire Doppler into your dev workflow (generates `doppler.yaml`):
    ```bash
-   doppler setup           # Select project + config
+   doppler setup --project <app-name> --config dev
    doppler run -- npm run dev  # Injects env vars at runtime
    ```
-3. In `nuxt.config.ts`, declare all secrets in `runtimeConfig`:
+3. In `nuxt.config.ts`, declare all secrets in `runtimeConfig` with explicit `process.env.KEY` access:
    ```ts
    runtimeConfig: {
-     secretKey: '',        // Server-only — reads from NUXT_SECRET_KEY
+     secretKey: process.env.SECRET_KEY || '',        // Server-only
      public: {
-       appUrl: '',         // Client-safe — reads from NUXT_PUBLIC_APP_URL
+       appUrl: process.env.SITE_URL || '',           // Client-safe
      },
    }
    ```
-4. Doppler env var names map to Nuxt's `NUXT_` prefix convention automatically.
+4. **Important:** Doppler env var names are the **raw key names** (e.g. `POSTHOG_PUBLIC_KEY`, `SITE_URL`). They do **NOT** use the `NUXT_` prefix. The `nuxt.config.ts` reads them directly via `process.env.KEY` at build time.
 
 ### Enterprise Hub-and-Spoke Architecture
 
-All template derivatives should utilize **Doppler Cross-Project Secret Referencing** to avoid duplicating sensitive keys. Do not copy/paste keys manually.
+All template derivatives use **Doppler Cross-Project Secret Referencing** to avoid duplicating sensitive keys. **Never** copy/paste secret values between projects manually.
 
-1. **`narduk-enterprise-apps` Hub**: This project holds infrastructure deploy credentials (e.g., `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`).
-2. **`narduk-analytics` Hub**: This project holds central management keys for generating analytics (e.g., `POSTHOG_PERSONAL_API_KEY`, `GA_ACCOUNT_ID`).
-3. **App Spoke (`<app-name>`)**: This is your new app's isolated project. Inherit the deploy credentials from the Hub using Doppler references:
-   - `CLOUDFLARE_API_TOKEN` = `${narduk-enterprise-apps.prd.CLOUDFLARE_API_TOKEN}`
-   - `CLOUDFLARE_ACCOUNT_ID` = `${narduk-enterprise-apps.prd.CLOUDFLARE_ACCOUNT_ID}`
+#### Hub Projects (shared infrastructure — you do NOT create these)
+
+| Hub Project              | Purpose                          | Secrets It Owns                                                                                                                     |
+| ------------------------ | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `narduk-enterprise-apps` | Cloud infrastructure credentials | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`                                                                                     |
+| `narduk-analytics`       | Centralized analytics management | `POSTHOG_PUBLIC_KEY`, `POSTHOG_PROJECT_ID`, `POSTHOG_HOST`, `POSTHOG_PERSONAL_API_KEY`, `GA_ACCOUNT_ID`, `GSC_SERVICE_ACCOUNT_JSON` |
+
+#### App Spoke Projects (one per app — created by `init.ts`)
+
+Each app gets its own Doppler project (e.g. `my-cool-app`). The spoke inherits credentials from hubs using **cross-project references**, plus stores its own per-app secrets.
+
+**Doppler cross-project reference syntax:**
+
+```
+${<hub-project>.<config>.<KEY>}
+```
+
+**Example:** To reference the Cloudflare API token from the enterprise hub:
+
+```bash
+doppler secrets set CLOUDFLARE_API_TOKEN='${narduk-enterprise-apps.prd.CLOUDFLARE_API_TOKEN}' --project my-app --config prd
+```
+
+#### Complete Secret Reference Table
+
+| Secret                  | Source                                           | Config | Notes                                           |
+| ----------------------- | ------------------------------------------------ | ------ | ----------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | `← narduk-enterprise-apps` hub ref               | `prd`  | Deploy credential                               |
+| `CLOUDFLARE_ACCOUNT_ID` | `← narduk-enterprise-apps` hub ref               | `prd`  | Deploy credential                               |
+| `POSTHOG_PUBLIC_KEY`    | `← narduk-analytics` hub ref                     | `prd`  | Shared across all apps (single PostHog project) |
+| `POSTHOG_PROJECT_ID`    | `← narduk-analytics` hub ref                     | `prd`  | Shared across all apps                          |
+| `POSTHOG_HOST`          | `← narduk-analytics` hub ref                     | `prd`  | Defaults to `https://us.i.posthog.com`          |
+| `APP_NAME`              | Per-app (set by `init.ts`)                       | `prd`  | Differentiates apps in PostHog events           |
+| `SITE_URL`              | Per-app                                          | `prd`  | e.g. `https://myapp.com`                        |
+| `GA_MEASUREMENT_ID`     | Per-app (auto-generated by `setup-analytics.ts`) | `prd`  | `G-XXXXXXX`                                     |
+| `INDEXNOW_KEY`          | Per-app (auto-generated by `setup-analytics.ts`) | `prd`  | 32-char hex                                     |
+| `GA_PROPERTY_ID`        | Per-app (auto-generated)                         | `prd`  | GA4 property identifier                         |
+| `GSC_USER_EMAIL`        | Per-app                                          | `prd`  | Google account email for GSC access             |
+
+#### Dev vs. Prd Configs
+
+- **`dev` config:** Select this when running `doppler setup` locally. Hub references resolve automatically. You can override any key for local testing without affecting production.
+- **`prd` config:** Used by CI/CD (`deploy.yml`). The `init.ts` script provisions hub references in `prd` only. The `DOPPLER_TOKEN` GitHub secret is scoped to `prd`.
+- **`stg` config:** Available if needed; not provisioned by default.
+
+#### CI/CD Flow
+
+1. `init.ts` creates a Doppler service token (`ci-deploy`) scoped to `<app-name>/prd`
+2. The token is stored as `DOPPLER_TOKEN` GitHub Actions secret
+3. On push to `main`, `deploy.yml` installs the Doppler CLI, fetches **all resolved secrets** (hub refs are resolved server-side), and injects them into `$GITHUB_ENV`
+4. `pnpm build` and `wrangler deploy` run with full access to all secrets
 
 **Reference:** See `apps/examples/nuxt.config.ts` for the full runtimeConfig block.
 

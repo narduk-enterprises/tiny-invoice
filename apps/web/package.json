@@ -18,6 +18,7 @@
     "quality": "pnpm run lint && pnpm run typecheck"
   },
   "dependencies": {
+    "@narduk/eslint-config": "workspace:*",
     "nuxt": "^4.3.1"
   },
   "devDependencies": {

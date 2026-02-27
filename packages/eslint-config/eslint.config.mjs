@@ -10,6 +10,11 @@ import nuxtUI from './eslint-plugin-nuxt-ui/dist/index.js'
 import nuxtGuardrails from './eslint-plugin-nuxt-guardrails/dist/index.js'
 import vueOfficialBestPractices from './eslint-plugin-vue-official-best-practices/dist/index.js'
 import atx from './eslint-plugins/index.mjs'
+// Community ESLint plugins
+import importX from 'eslint-plugin-import-x'
+import unicorn from 'eslint-plugin-unicorn'
+import security from 'eslint-plugin-security'
+import regexp from 'eslint-plugin-regexp'
 
 /**
  * Shared ESLint flat config array.
@@ -77,94 +82,34 @@ export const sharedConfigs = [
     },
   },
 
-  // Vue-specific rules for better code quality
+  // Vue rules that override or extend @nuxt/eslint defaults
   {
     files: ['**/*.vue'],
     rules: {
-      // Component naming and structure
+      // Enforce PascalCase for all components in templates
       'vue/component-name-in-template-casing': [
         'warn',
         'PascalCase',
-        {
-          registeredComponentsOnly: false,
-          ignores: [],
-        },
+        { registeredComponentsOnly: false },
       ],
 
-      // Props validation
-      'vue/require-default-prop': 'warn',
-      'vue/require-prop-type-constructor': 'warn',
-      'vue/require-prop-types': 'warn',
-      'vue/prop-name-casing': ['warn', 'camelCase'],
-
-      // Template best practices
-      'vue/no-v-html': 'warn',
-      'vue/no-textarea-mustache': 'error',
-      'vue/no-unused-components': 'warn',
-      'vue/no-unused-refs': 'warn',
-      'vue/no-useless-template-attributes': 'warn',
-      'vue/no-useless-v-bind': 'warn',
-
-      // Composition API best practices
+      // Composition API preferences
       'vue/prefer-define-options': 'warn',
       'vue/prefer-import-from-vue': 'warn',
 
-      // Performance
-      'vue/no-v-for-template-key-on-child': 'error',
-      'vue/no-use-v-if-with-v-for': 'error',
-      'vue/no-multiple-template-root': 'off',
-      'vue/require-v-for-key': 'error',
-
-      // Code quality
-      'vue/block-order': [
-        'warn',
-        {
-          order: ['script', 'template', 'style'],
-        },
-      ],
+      // Code organisation
+      'vue/block-order': ['warn', { order: ['script', 'template', 'style'] }],
       'vue/attributes-order': 'off',
 
-      // Prevent common mistakes
-      'vue/no-async-in-computed-properties': 'error',
-      'vue/no-dupe-keys': 'error',
-      'vue/no-duplicate-attributes': 'error',
-      'vue/no-parsing-error': 'error',
-      'vue/no-ref-as-operand': 'error',
-      'vue/no-reserved-component-names': 'error',
-      'vue/no-shared-component-data': 'error',
-      'vue/no-side-effects-in-computed-properties': 'error',
-      'vue/no-template-key': 'warn',
+      // Relaxations (Nuxt 4 / Vue 3 specifics)
+      'vue/no-multiple-template-root': 'off',
       'vue/no-v-for-template-key': 'off',
-      'vue/require-component-is': 'error',
-      'vue/require-render-return': 'error',
-      'vue/return-in-computed-property': 'error',
-      'vue/return-in-emits-validator': 'error',
-      'vue/use-v-on-exact': 'warn',
-      'vue/valid-template-root': 'error',
-      'vue/valid-v-bind': 'error',
-      'vue/valid-v-cloak': 'error',
-      'vue/valid-v-else-if': 'error',
-      'vue/valid-v-else': 'error',
-      'vue/valid-v-for': 'error',
-      'vue/valid-v-html': 'error',
-      'vue/valid-v-if': 'error',
-      'vue/valid-v-is': 'error',
-      'vue/valid-v-memo': 'error',
-      'vue/valid-v-model': 'error',
-      'vue/valid-v-on': 'error',
-      'vue/valid-v-once': 'error',
-      'vue/valid-v-pre': 'error',
-      'vue/valid-v-show': 'error',
-      'vue/valid-v-slot': 'error',
-      'vue/valid-v-text': 'error',
+      'vue/no-v-html': 'warn',
     },
   },
 
-  // Project-specific rules
+  // Project-specific rules (uses @typescript-eslint registered by @nuxt/eslint)
   {
-    plugins: {
-      '@typescript-eslint': tseslint.plugin,
-    },
     rules: {
       'no-unused-vars': 'off',
       'no-debugger': 'warn',
@@ -184,14 +129,6 @@ export const sharedConfigs = [
   // ── Nuxt UI component validation ──────────────────────────────
   {
     files: ['**/*.vue'],
-    languageOptions: {
-      parser: vueParser,
-      parserOptions: {
-        parser: tseslint.parser,
-        sourceType: 'module',
-        extraFileExtensions: ['.vue'],
-      },
-    },
     plugins: {
       'nuxt-ui': nuxtUI,
     },
@@ -226,5 +163,62 @@ export const sharedConfigs = [
     rules: {
       'vue-official/require-use-prefix-for-composables': 'off',
     },
-  }
+  },
+
+  // ── Import ordering & hygiene (eslint-plugin-import-x) ────────
+  {
+    files: ['**/*.ts', '**/*.mts', '**/*.vue'],
+    plugins: {
+      'import-x': importX,
+    },
+    rules: {
+      'import-x/no-duplicates': 'error',
+      'import-x/no-self-import': 'error',
+      'import-x/no-useless-path-segments': 'warn',
+      'import-x/first': 'warn',
+      'import-x/newline-after-import': 'warn',
+      'import-x/no-mutable-exports': 'error',
+    },
+  },
+
+  // ── Modern JS best practices (cherry-picked from unicorn) ─────
+  {
+    files: ['**/*.ts', '**/*.mts', '**/*.vue'],
+    plugins: {
+      unicorn,
+    },
+    rules: {
+      'unicorn/prefer-node-protocol': 'error',
+      'unicorn/no-array-for-each': 'warn',
+      'unicorn/prefer-at': 'warn',
+      'unicorn/no-useless-undefined': 'warn',
+      'unicorn/prefer-string-replace-all': 'warn',
+      'unicorn/prefer-number-properties': 'warn',
+      'unicorn/no-lonely-if': 'warn',
+      'unicorn/prefer-array-find': 'warn',
+      'unicorn/prefer-includes': 'warn',
+      'unicorn/no-instanceof-array': 'error',
+      'unicorn/throw-new-error': 'error',
+    },
+  },
+
+  // ── Security rules for server-side code ────────────────────────
+  {
+    files: ['server/**/*.ts'],
+    plugins: {
+      security,
+    },
+    rules: {
+      'security/detect-object-injection': 'off',   // too noisy for bracket access
+      'security/detect-non-literal-regexp': 'warn',
+      'security/detect-unsafe-regex': 'error',
+      'security/detect-buffer-noassert': 'error',
+      'security/detect-eval-with-expression': 'error',
+      'security/detect-no-csrf-before-method-override': 'error',
+      'security/detect-possible-timing-attacks': 'warn',
+    },
+  },
+
+  // ── Regex validation (eslint-plugin-regexp) ────────────────────
+  regexp.configs['flat/recommended'],
 ]

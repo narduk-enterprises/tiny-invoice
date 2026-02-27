@@ -325,45 +325,75 @@ async function runGaSetup() {
   const appName = getAppName()
 
   console.log()
-  console.log('Step 1/3: Creating GA4 property...')
-  const propertyRes = await analyticsadmin.properties.create({
-    requestBody: {
-      parent: `accounts/${gaAccountId}`,
-      displayName: appName,
-      timeZone: 'America/Los_Angeles',
-      currencyCode: 'USD'
+  console.log('Step 1/3: Checking for existing GA4 property...')
+  let propertyName = ''
+  try {
+    const listRes = await analyticsadmin.properties.list({ filter: `parent:accounts/${gaAccountId}` })
+    const existing = listRes.data.properties?.find((p: any) => p.displayName === appName)
+    if (existing) {
+      propertyName = existing.name || ''
+      console.log(`  ✅  Found existing property: ${propertyName}`)
     }
-  }).catch((e: any) => {
-    throw new Error(e.message || 'Failed to create property')
-  })
+  } catch (e: any) {
+    // Ignore list error and proceed to create
+  }
 
-  const property = propertyRes.data
-  const propertyName = property?.name
-  if (!propertyName) throw new Error('Property created but no name in response')
-  console.log(`  ✅  Property created: ${propertyName}`)
+  if (!propertyName) {
+    console.log('          Creating new GA4 property...')
+    const propertyRes = await analyticsadmin.properties.create({
+      requestBody: {
+        parent: `accounts/${gaAccountId}`,
+        displayName: appName,
+        timeZone: 'America/Los_Angeles',
+        currencyCode: 'USD'
+      }
+    }).catch((e: any) => {
+      throw new Error(e.message || 'Failed to create property')
+    })
+  
+    const property = propertyRes.data
+    propertyName = property?.name || ''
+    if (!propertyName) throw new Error('Property created but no name in response')
+    console.log(`  ✅  Property created: ${propertyName}`)
+  }
 
   console.log()
-  console.log('Step 2/3: Creating web data stream...')
-  const defaultUri = siteUrl.replace(/\/$/, '')
-  const streamRes = await analyticsadmin.properties.dataStreams.create({
-    parent: propertyName,
-    requestBody: {
-      displayName: `${appName} Web`,
-      type: 'WEB_DATA_STREAM',
-      webStreamData: {
-        defaultUri
-      }
+  console.log('Step 2/3: Checking for existing web data stream...')
+  let measurementId = ''
+  try {
+    const streamsRes = await analyticsadmin.properties.dataStreams.list({ parent: propertyName })
+    const existingStream = streamsRes.data.dataStreams?.find((s: any) => s.type === 'WEB_DATA_STREAM')
+    if (existingStream) {
+      measurementId = existingStream.webStreamData?.measurementId || ''
+      console.log(`  ✅  Found existing web stream. Measurement ID: ${measurementId}`)
     }
-  }).catch((e: any) => {
-    throw new Error(e.message || 'Failed to create data stream')
-  })
-
-  const stream = streamRes.data
-  const measurementId = (stream as any)?.webStreamData?.measurementId
-  if (!measurementId) {
-    throw new Error('Data stream created but no measurementId in response')
+  } catch (e: any) {
+    // Ignore list error and proceed to create
   }
-  console.log(`  ✅  Web stream created. Measurement ID: ${measurementId}`)
+
+  if (!measurementId) {
+    console.log('          Creating new web data stream...')
+    const defaultUri = siteUrl.replace(/\/$/, '')
+    const streamRes = await analyticsadmin.properties.dataStreams.create({
+      parent: propertyName,
+      requestBody: {
+        displayName: `${appName} Web`,
+        type: 'WEB_DATA_STREAM',
+        webStreamData: {
+          defaultUri
+        }
+      }
+    }).catch((e: any) => {
+      throw new Error(e.message || 'Failed to create data stream')
+    })
+  
+    const stream = streamRes.data
+    measurementId = (stream as any)?.webStreamData?.measurementId || ''
+    if (!measurementId) {
+      throw new Error('Data stream created but no measurementId in response')
+    }
+    console.log(`  ✅  Web stream created. Measurement ID: ${measurementId}`)
+  }
 
   console.log()
   console.log('Step 3/3: Writing GA_MEASUREMENT_ID to Doppler...')
@@ -459,6 +489,17 @@ async function runGscPipeline() {
   // Step 2: Get verification token and create file
   console.log()
   console.log('Step 2/4: Creating verification file...')
+  
+  const existingVerificationFiles = findVerificationFiles()
+  if (existingVerificationFiles.length > 0) {
+    console.log(`  ✅  Found existing verification file(s): ${existingVerificationFiles.join(', ')}. Skipping creation.`)
+    console.log()
+    console.log('  ⚠️   You must deploy now so Google can find the verification file.')
+    console.log('       Run: npm run deploy')
+    console.log('       Then run: npm run setup:gsc:verify')
+    return
+  }
+
   const tokenResponse = await siteVerification.webResource.getToken({
     requestBody: {
       site: { identifier: siteUrl, type: 'SITE' },
