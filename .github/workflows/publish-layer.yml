@@ -1,0 +1,52 @@
+name: Publish Layer Package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'layers/narduk-nuxt-layer/**'
+
+concurrency:
+  group: publish-layer
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed for git push (version bump commit)
+      packages: write # needed for GitHub Packages publish
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Bump patch version
+        working-directory: layers/narduk-nuxt-layer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          git add package.json
+          git commit -m "chore: bump layer to v${VERSION} [skip ci]"
+          git push
+
+      - name: Publish to GitHub Packages
+        working-directory: layers/narduk-nuxt-layer
+        run: pnpm publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
