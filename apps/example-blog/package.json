@@ -6,8 +6,8 @@
   "scripts": {
     "build": "nuxt build",
     "db:ready": "pnpm run db:migrate && pnpm run db:seed",
-    "db:migrate": "wrangler d1 execute showcase-db --local --file=node_modules/@loganrenz/narduk-nuxt-template-layer/drizzle/0000_initial_schema.sql",
-    "db:seed": "wrangler d1 execute showcase-db --local --file=node_modules/@loganrenz/narduk-nuxt-template-layer/drizzle/seed.sql",
+    "db:migrate": "wrangler d1 execute narduk-nuxt-template-examples-db --local --file=node_modules/@loganrenz/narduk-nuxt-template-layer/drizzle/0000_initial_schema.sql",
+    "db:seed": "wrangler d1 execute narduk-nuxt-template-examples-db --local --file=node_modules/@loganrenz/narduk-nuxt-template-layer/drizzle/seed.sql",
     "dev": "pnpm run db:ready && nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

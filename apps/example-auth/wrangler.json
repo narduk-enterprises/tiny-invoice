@@ -13,8 +13,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "showcase-db",
-      "database_id": "REPLACE_VIA_PNPM_SETUP"
+      "database_name": "narduk-nuxt-template-examples-db",
+      "database_id": "f8070060-4588-4f9b-a9a9-bb3f09e00501"
     }
   ]
 }
