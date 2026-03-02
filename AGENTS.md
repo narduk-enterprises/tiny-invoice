@@ -456,7 +456,7 @@ doppler secrets set CLOUDFLARE_API_TOKEN='${narduk-nuxt-template.prd.CLOUDFLARE_
 
 | Secret                  | Source                                           | Config | Notes                                           |
 | ----------------------- | ------------------------------------------------ | ------ | ----------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | `← narduk-nuxt-template` hub ref                 | `prd`  | Deploy credential                               |
+| `CLOUDFLARE_API_TOKEN`  | `← narduk-nuxt-template` hub ref                 | `prd`  | Deploy + D1 migrations; token must have **Account** scope and **D1 → Edit** or CI fails with auth error 10000 on `wrangler d1 execute --remote`. |
 | `CLOUDFLARE_ACCOUNT_ID` | `← narduk-nuxt-template` hub ref                 | `prd`  | Deploy credential                               |
 | `POSTHOG_PUBLIC_KEY`    | `← narduk-analytics` hub ref                     | `prd`  | Shared across all apps (single PostHog project) |
 | `POSTHOG_PROJECT_ID`    | `← narduk-analytics` hub ref                     | `prd`  | Shared across all apps                          |
@@ -481,7 +481,7 @@ doppler secrets set CLOUDFLARE_API_TOKEN='${narduk-nuxt-template.prd.CLOUDFLARE_
 
 1. GitHub must have either the `DOPPLER_TOKEN` secret (recommended) or both `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 2. If setup was run without a git remote, add the remote and re-run with `--repair` to set `DOPPLER_TOKEN`.
-3. The app's Doppler `prd` config must expose `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (via hub sync or direct) so the deploy job can run `wrangler deploy`.
+3. The app's Doppler `prd` config must expose `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (via hub sync or direct) so the deploy job can run `wrangler deploy` and `wrangler d1 execute --remote`. The API token must have **D1 → Edit** permission (Account scope); otherwise D1 migrations in CI fail with authentication error 10000.
 
 4. `init.ts` creates a Doppler service token (`ci-deploy`) scoped to `<app-name>/prd`
 5. The token is stored as `DOPPLER_TOKEN` GitHub Actions secret
