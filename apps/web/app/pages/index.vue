@@ -23,6 +23,9 @@ useWebPageSchema({
         <UButton to="/login" color="neutral" variant="outline" icon="i-lucide-log-in">
           Log in
         </UButton>
+        <UButton to="/login" color="primary" variant="soft" icon="i-lucide-sparkles">
+          Try demo
+        </UButton>
       </template>
     </UPageHero>
     <section class="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">

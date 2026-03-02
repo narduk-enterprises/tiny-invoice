@@ -8,6 +8,7 @@
     "dev": "nuxt dev",
     "db:migrate": "wrangler d1 execute tiny-invoice-db --local --file=drizzle/0000_initial_schema.sql",
     "db:seed": "wrangler d1 execute tiny-invoice-db --local --file=drizzle/seed.sql",
+    "db:seed:remote": "wrangler d1 execute tiny-invoice-db --remote --file=drizzle/seed.sql",
     "db:ready": "pnpm run db:migrate && pnpm run db:seed",
     "db:studio": "drizzle-kit studio",
     "generate": "nuxt generate",
