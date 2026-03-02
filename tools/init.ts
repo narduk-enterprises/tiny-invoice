@@ -638,6 +638,18 @@ Pushes to \`main\` are automatically built and deployed via the GitHub Actions C
       await fs.rm(path.join(ROOT_DIR, '.github', 'workflows', 'deploy-showcase.yml'), rmOptions)
       await fs.rm(path.join(ROOT_DIR, '.github', 'workflows', 'publish-layer.yml'), rmOptions)
 
+      // Strip deploy-examples and deploy-showcase jobs from ci.yml so CI does not fail after example apps are removed
+      const ciPath = path.join(ROOT_DIR, '.github', 'workflows', 'ci.yml')
+      try {
+        let ciContent = await fs.readFile(ciPath, 'utf-8')
+        if (ciContent.includes('deploy-examples:')) {
+          ciContent = ciContent.replace(/\n  deploy-examples:[\s\S]*/m, '')
+          await fs.writeFile(ciPath, ciContent, 'utf-8')
+        }
+      } catch (ciErr: any) {
+        console.warn(`  ⚠️ Could not update ci.yml: ${ciErr.message}`)
+      }
+
       // Prune root package.json scripts
       const rootPkgPath = path.join(ROOT_DIR, 'package.json')
       const rootPkgContent = await fs.readFile(rootPkgPath, 'utf-8')
