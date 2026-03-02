@@ -56,6 +56,18 @@ scripts/              # Utility scripts (favicon generation)
 - **Drizzle ORM only** — no Prisma or other Node-dependent ORMs
 - All server code must be stateless across requests (edge isolate model)
 
+### Cloudflare API token (CI / D1)
+
+The token used in CI for `wrangler d1 execute --remote` and `wrangler deploy` (e.g. `CLOUDFLARE_API_TOKEN` from Doppler or GitHub secrets) **must** have the correct permissions or D1 operations will fail with:
+
+```text
+A request to the Cloudflare API (.../d1/database/.../import) failed.
+Please ensure it has the correct permissions for this operation.
+Authentication error [code: 10000]
+```
+
+**Required:** When creating the token at [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens), use **Account** scope and add **D1** → **Edit**. (D1 Read alone is not enough for migrations or import.) Document this in the workspace root AGENTS.md Secrets recipe so app maintainers and hub admins create tokens with D1 Edit.
+
 ## Nuxt UI 4 Rules
 
 - `UDivider` → renamed to **`USeparator`** in v4
