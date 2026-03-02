@@ -1,6 +1,6 @@
 {
   "name": "tiny-invoice",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "scripts": {
