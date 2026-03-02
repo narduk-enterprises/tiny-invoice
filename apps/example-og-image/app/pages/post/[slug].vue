@@ -11,7 +11,7 @@ const category = computed(() => {
 
 const excerpt = computed(() => `This OG image is generated for /post/${slug.value} and can change with query params.`)
 
-const generatedPaths = defineOgImage('OgArticleCardTakumi', {
+const generatedPaths = defineOgImage('OgImageArticleTakumi', {
   title: title.value,
   excerpt: excerpt.value,
   category: category.value,

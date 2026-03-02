@@ -26,21 +26,6 @@ export default defineNuxtConfig({
   ogImage: {
     defaults: {
       component: 'OgPlaygroundTakumi',
-      cacheMaxAgeSeconds: 60 * 10,
-    },
-    runtimeCacheStorage: {
-      driver: 'memory',
-    },
-  },
-
-  image: {
-    provider: 'cloudflare',
-    providers: {
-      // Use raw URLs for OG previews in this demo app to avoid /cdn-cgi/image
-      // transforms during local development.
-      oglocal: {
-        provider: 'none',
-      },
     },
   },
 })

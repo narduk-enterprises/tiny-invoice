@@ -140,8 +140,27 @@ async function main() {
       const original = await fs.readFile(file, 'utf-8')
       let content = original
 
+      // Protect the layer's package identity — the layer's `name` field must remain
+      // stable because it's a published workspace dependency referenced by consuming apps.
+      const isLayerPkg = /layers\/[^/]+\/package\.json$/.test(file)
+      let preservedName: string | undefined
+      if (isLayerPkg) {
+        try {
+          preservedName = JSON.parse(original).name
+        } catch { /* not valid JSON, skip preservation */ }
+      }
+
       for (const r of REPLACEMENTS) {
         content = content.replace(r.from, r.to)
+      }
+
+      // Restore the preserved layer package name after replacements
+      if (preservedName && isLayerPkg) {
+        try {
+          const parsed = JSON.parse(content)
+          parsed.name = preservedName
+          content = JSON.stringify(parsed, null, 2) + '\n'
+        } catch { /* not valid JSON after replacement, skip */ }
       }
 
       if (original !== content) {

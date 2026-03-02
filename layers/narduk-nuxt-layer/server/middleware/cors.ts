@@ -26,7 +26,7 @@ export default defineEventHandler((event) => {
 
   // Read allowed origins from runtime config
   const config = useRuntimeConfig(event)
-  const allowedOriginsRaw = (config as Record<string, any>).corsAllowedOrigins as string | undefined
+  const allowedOriginsRaw = (config as Record<string, unknown>).corsAllowedOrigins as string | undefined
 
   // Default: no CORS allowed (same-origin only)
   if (!allowedOriginsRaw) return

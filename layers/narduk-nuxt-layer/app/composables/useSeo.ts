@@ -50,11 +50,15 @@ interface SeoOptions {
   canonicalUrl?: string
   /** Keywords for meta keywords tag */
   keywords?: string[]
-  /** Dynamic OG image options — renders via the OgImageDefault template at the edge */
+  /** Dynamic OG image options — renders via OG image templates at the edge */
   ogImage?: {
     title?: string
     description?: string
     icon?: string
+    /** OG image component name suffix — defaults to 'Default', auto-selects 'Article' for article type */
+    component?: string
+    /** Category badge text — used by the Article template */
+    category?: string
   }
   /** Additional robots directives — e.g., 'noindex', 'nofollow' */
   robots?: string
@@ -81,7 +85,9 @@ export function useSeo(options: SeoOptions) {
     description,
     ogTitle: title,
     ogDescription: description,
-    ogType: type,
+    // Cast needed: @nuxtjs/seo's TS union for ogType is incomplete (e.g. missing 'product').
+    // Valid OG types per spec are broader than the library's type definition.
+    ogType: type as string,
     twitterCard: 'summary_large_image',
     twitterTitle: title,
     twitterDescription: description,
@@ -106,10 +112,14 @@ export function useSeo(options: SeoOptions) {
 
   // --- Dynamic OG Image ---
   if (ogImage) {
-    defineOgImage('Default', {
+    const componentName = ogImage.component || (type === 'article' ? 'Article' : 'Default')
+    // @ts-expect-error OgImage components are provided by this layer but OgImageComponents
+    // types aren't populated until the consuming app runs nuxt prepare.
+    defineOgImage(componentName, {
       title: ogImage.title || title,
       description: ogImage.description || description,
       icon: ogImage.icon || '✨',
+      ...(ogImage.category && { category: ogImage.category }),
     })
   }
 }

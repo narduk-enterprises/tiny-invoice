@@ -46,7 +46,7 @@ const navItems = [
         <div class="p-4 border-t border-default space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-muted truncate">{{ user?.name || 'User' }}</span>
-            <UButton :icon="colorModeIcon" variant="ghost" color="neutral" size="sm" @click="cycleColorMode" />
+            <UButton :icon="colorModeIcon" variant="ghost" color="neutral" size="sm" aria-label="Toggle color mode" @click="cycleColorMode" />
           </div>
           <UButton color="neutral" variant="ghost" icon="i-lucide-log-out" block @click="logout">
             Sign out
@@ -57,7 +57,7 @@ const navItems = [
       <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header class="h-16 border-b border-default bg-default flex items-center justify-between px-4 md:hidden">
           <span class="font-semibold">Dashboard</span>
-          <UButton variant="ghost" icon="i-lucide-menu" color="neutral" />
+          <UButton variant="ghost" icon="i-lucide-menu" color="neutral" aria-label="Open menu" />
         </header>
 
         <div class="flex-1 overflow-auto p-6 md:p-8">

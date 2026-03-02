@@ -1,8 +1,15 @@
+/**
+ * Local-dev fallback for NuxtImg cloudflare provider.
+ *
+ * In production, Cloudflare handles `/cdn-cgi/image/<modifiers>/<path>`
+ * natively. During local development there is no Cloudflare proxy, so
+ * this route strips the modifiers and redirects to the underlying path.
+ *
+ * Only allows redirects to `/_og/` paths to prevent open-redirect abuse.
+ */
 export default defineEventHandler(async (event) => {
   const rawPath = getRouterParam(event, 'path') || ''
 
-  // Local dev fallback for NuxtImg cloudflare provider:
-  // /cdn-cgi/image/<modifiers>/<real-path> -> /<real-path>
   const segments = rawPath.split('/').filter(Boolean)
   if (segments.length < 2) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid Cloudflare image path' })

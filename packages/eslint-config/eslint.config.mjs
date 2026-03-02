@@ -24,6 +24,10 @@ import regexp from 'eslint-plugin-regexp'
  *   import { sharedConfigs } from '@narduk/eslint-config'
  *   export default withNuxt(...sharedConfigs)
  */
+// Re-export the atx plugin so consuming apps can reference it in their own
+// config objects when overriding atx rule severities.
+export { default as atxPlugin } from './eslint-plugins/index.mjs'
+
 export const sharedConfigs = [
   // Vue files: use vue-eslint-parser with TypeScript parser for script blocks
   {

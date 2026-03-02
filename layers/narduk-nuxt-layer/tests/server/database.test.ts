@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { useDatabase } from '../../server/utils/database'
 
 /**
  * Unit tests for the useDatabase server utility.
@@ -23,21 +24,19 @@ vi.mock('drizzle-orm/d1', () => ({
 
 vi.mock('../../server/database/schema', () => ({}))
 
-import { useDatabase } from '../../server/utils/database'
-
 describe('useDatabase', () => {
   it('throws 500 when D1 binding is not available', () => {
     const event = {
       context: { cloudflare: { env: {} } },
     }
-    expect(() => useDatabase(event as any)).toThrow('D1 database binding not available')
+    expect(() => useDatabase(event as never)).toThrow('D1 database binding not available')
   })
 
   it('throws 500 when cloudflare context is missing', () => {
     const event = {
       context: {},
     }
-    expect(() => useDatabase(event as any)).toThrow('D1 database binding not available')
+    expect(() => useDatabase(event as never)).toThrow('D1 database binding not available')
   })
 
   it('returns a Drizzle instance when D1 binding exists', () => {
@@ -46,7 +45,7 @@ describe('useDatabase', () => {
         cloudflare: { env: { DB: { __d1: true } } },
       },
     }
-    const db = useDatabase(event as any)
+    const db = useDatabase(event as never)
     expect(db).toBeDefined()
     expect(db).toEqual({ __mock: true })
   })
@@ -56,7 +55,7 @@ describe('useDatabase', () => {
     const event = {
       context: { _db: existingDb },
     }
-    const db = useDatabase(event as any)
+    const db = useDatabase(event as never)
     expect(db).toBe(existingDb)
   })
 })
