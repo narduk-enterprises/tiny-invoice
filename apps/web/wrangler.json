@@ -1,20 +1,22 @@
 {
   "$schema": "https://unpkg.com/wrangler@latest/config-schema.json",
-  "name": "narduk-nuxt-template",
+  "name": "tiny-invoice",
   "main": ".output/server/index.mjs",
   "assets": {
     "directory": ".output/public"
   },
   "compatibility_date": "2025-07-15",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "observability": {
     "enabled": true
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "narduk-nuxt-template-db",
-      "database_id": "2176c867-da11-4328-a79a-852fa713ca9e"
+      "database_name": "tiny-invoice-db",
+      "database_id": "e2260a6b-cdb6-47dd-aaa4-f0f39c2d7f5f"
     }
   ]
 }

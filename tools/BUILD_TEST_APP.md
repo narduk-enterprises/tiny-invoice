@@ -1,18 +1,18 @@
 # Agent Prompt: Build "example-tasks" Test App (Standalone Template)
 
-> **Purpose:** This prompt instructs an AI agent to build a simple task-list app by cloning the `narduk-nuxt-template` repository and initializing it as a standalone project. The app is intentionally small but touches every major subsystem — proving the template's end-to-end workflow works from clone to deploy.
+> **Purpose:** This prompt instructs an AI agent to build a simple task-list app by cloning the `tiny-invoice` repository and initializing it as a standalone project. The app is intentionally small but touches every major subsystem — proving the template's end-to-end workflow works from clone to deploy.
 
 ---
 
 ## Prompt
 
-You are building a **simple task-list application** called `example-tasks` by using the `narduk-nuxt-template` repository. The app should be minimal but must exercise every major subsystem the template provides. Follow these instructions exactly.
+You are building a **simple task-list application** called `example-tasks` by using the `tiny-invoice` repository. The app should be minimal but must exercise every major subsystem the template provides. Follow these instructions exactly.
 
 ### 1. Clone & Initialize the Template
 
 1. Clone the template repository to a new directory:
    ```bash
-   git clone https://github.com/loganrenz/narduk-nuxt-template.git example-tasks
+   git clone https://github.com/loganrenz/tiny-invoice.git example-tasks
    cd example-tasks
    ```
 2. Clear the template's git history and set up your own repository (Required for GitHub CI secrets to bind properly):
@@ -70,7 +70,7 @@ apps/web/
 
 #### `nuxt.config.ts`
 
-- Ensure `extends: ['@loganrenz/narduk-nuxt-template-layer']` remains.
+- Ensure `extends: ['@loganrenz/tiny-invoice-layer']` remains.
 - Add `modules: ['nitro-cloudflare-dev']` with `nitro.cloudflareDev.configPath` pointing to local `wrangler.json` (Required to access the local D1 database during development).
 - Ensure `site` metadata matches "Tasks Example".
 
@@ -90,7 +90,7 @@ apps/web/
 
 ```ts
 // Re-export the layer base schema, then add app-specific tables
-export * from '@loganrenz/narduk-nuxt-template-layer/server/database/schema';
+export * from '@loganrenz/tiny-invoice-layer/server/database/schema';
 
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
@@ -161,7 +161,7 @@ Simple layout with:
 
 - A sticky header using `UHeader` or manual markup with app name "Tasks Example" and a nav link to `/about`
 - A `<slot />` for page content
-- A footer with "Built with narduk-nuxt-template"
+- A footer with "Built with tiny-invoice"
 
 #### `app/pages/index.vue`
 
@@ -271,7 +271,7 @@ When complete, this project will have validated:
 | Subsystem                  | How It's Tested                                                     |
 | -------------------------- | ------------------------------------------------------------------- |
 | **Project Initialization** | Template clone, `init.ts` setup + automated cleanup                 |
-| **Layer inheritance**      | `extends: ['@loganrenz/narduk-nuxt-template-layer']` in nuxt.config |
+| **Layer inheritance**      | `extends: ['@loganrenz/tiny-invoice-layer']` in nuxt.config |
 | **Nuxt 4 structure**       | `app/` directory with `future: { compatibilityVersion: 4 }`         |
 | **D1 + Drizzle**           | `tasks` table via Drizzle ORM with D1 binding                       |
 | **Cloudflare Workers**     | `wrangler.json` + `nitro` config + no Node.js APIs                  |
@@ -296,4 +296,4 @@ When complete, this project will have validated:
 - **NO duplicating layer files** — don't recreate `useSeo`, `useSchemaOrg`, plugins, or middleware.
 - **DO call `useSeo()` + `useWebPageSchema()`** on every page.
 - **DO use Nuxt UI 4 components** — `USeparator` (not `UDivider`), `i-lucide-*` icons.
-- **DO use `@loganrenz/narduk-nuxt-template-layer` as workspace dependency** — never copy layer code.
+- **DO use `@loganrenz/tiny-invoice-layer` as workspace dependency** — never copy layer code.

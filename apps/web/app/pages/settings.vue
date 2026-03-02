@@ -1,0 +1,71 @@
+<script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
+useSeo({
+  title: 'Settings — TinyInvoice',
+  description: 'Update your business details.',
+})
+useWebPageSchema({ name: 'Settings — TinyInvoice', description: 'Account and business settings.' })
+
+const { user, fetchUser } = useAuth()
+const config = useRuntimeConfig().public
+
+const formState = ref({
+  businessName: '',
+  businessAddress: '',
+})
+
+watch(user, (u) => {
+  if (u) {
+    formState.value.businessName = u.businessName ?? ''
+    formState.value.businessAddress = u.businessAddress ?? ''
+  }
+}, { immediate: true })
+
+const saving = ref(false)
+const error = ref('')
+const success = ref(false)
+
+async function submit() {
+  error.value = ''
+  success.value = false
+  saving.value = true
+  try {
+    await $fetch('/api/settings', {
+      method: 'PUT',
+      body: {
+        businessName: formState.value.businessName || null,
+        businessAddress: formState.value.businessAddress || null,
+      },
+    })
+    await fetchUser()
+    success.value = true
+  } catch (e: unknown) {
+    const err = e as { data?: { message?: string }; message?: string }
+    error.value = err.data?.message ?? err.message ?? 'Failed to save'
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+
+<template>
+  <UPage>
+    <UPageHeader title="Settings" description="Update your business details for invoices." />
+    <UCard class="card-base max-w-lg">
+      <UForm :state="formState" @submit="submit">
+        <div class="space-y-4">
+          <UFormField label="Business name" name="businessName">
+            <UInput v-model="formState.businessName" placeholder="My Freelance Co" />
+          </UFormField>
+          <UFormField label="Business address" name="businessAddress">
+            <UTextarea v-model="formState.businessAddress" placeholder="123 Main St, City, ST 12345" :rows="3" />
+          </UFormField>
+          <UAlert v-if="error" color="error" :title="error" class="text-sm" />
+          <UAlert v-if="success" color="success" title="Settings saved." class="text-sm" />
+          <UButton type="submit" :loading="saving">Save</UButton>
+        </div>
+      </UForm>
+    </UCard>
+  </UPage>
+</template>
