@@ -11,10 +11,34 @@ const { stats, pending } = useDashboard()
 const { invoices, listPending } = useInvoices()
 const { formatCents } = useFormat()
 
-const { data: listData } = useFetch<{ invoices: { id: string; invoiceNumber: string; status: string; total: number; clientName?: string }[] }>('/api/invoices', {
-  default: () => ({ invoices: [] }),
-})
-const recentInvoices = computed(() => (listData.value?.invoices ?? []).slice(0, 5))
+const recentInvoices = computed(() => invoices.value.slice(0, 5))
+const totalInvoiceCount = computed(
+  () =>
+    (stats.value?.invoiceCountByStatus?.draft ?? 0) +
+    (stats.value?.invoiceCountByStatus?.sent ?? 0) +
+    (stats.value?.invoiceCountByStatus?.paid ?? 0) +
+    (stats.value?.invoiceCountByStatus?.overdue ?? 0),
+)
+const displayRevenue = computed(() => formatCents(stats.value?.totalRevenue ?? 0))
+const displayOutstanding = computed(() => formatCents(stats.value?.outstanding ?? 0))
+const displayPaidCount = computed(() => stats.value?.invoiceCountByStatus?.paid ?? 0)
+function rowStatusColor(status: string) {
+  if (status === 'paid') return 'success'
+  if (status === 'overdue') return 'error'
+  if (status === 'sent') return 'info'
+  return 'neutral'
+}
+function rowTotal(row: { total?: number }) {
+  return formatCents(row.total ?? 0)
+}
+
+function getRowBadgeColor(row: unknown) {
+  return rowStatusColor((row as { status?: string }).status ?? '')
+}
+
+function getRowBadgeLabel(row: unknown) {
+  return (row as { status?: string }).status ?? ''
+}
 </script>
 
 <template>
@@ -32,7 +56,7 @@ const recentInvoices = computed(() => (listData.value?.invoices ?? []).slice(0, 
             </div>
             <div>
               <p class="text-sm text-muted">Total revenue (paid)</p>
-              <p class="text-xl font-semibold">{{ formatCents(stats?.totalRevenue ?? 0) }}</p>
+              <p class="text-xl font-semibold">{{ displayRevenue }}</p>
             </div>
           </div>
         </UCard>
@@ -43,7 +67,7 @@ const recentInvoices = computed(() => (listData.value?.invoices ?? []).slice(0, 
             </div>
             <div>
               <p class="text-sm text-muted">Outstanding</p>
-              <p class="text-xl font-semibold">{{ formatCents(stats?.outstanding ?? 0) }}</p>
+              <p class="text-xl font-semibold">{{ displayOutstanding }}</p>
             </div>
           </div>
         </UCard>
@@ -54,9 +78,7 @@ const recentInvoices = computed(() => (listData.value?.invoices ?? []).slice(0, 
             </div>
             <div>
               <p class="text-sm text-muted">Invoices</p>
-              <p class="text-xl font-semibold">
-                {{ (stats?.invoiceCountByStatus?.draft ?? 0) + (stats?.invoiceCountByStatus?.sent ?? 0) + (stats?.invoiceCountByStatus?.paid ?? 0) + (stats?.invoiceCountByStatus?.overdue ?? 0) }}
-              </p>
+              <p class="text-xl font-semibold">{{ totalInvoiceCount }}</p>
             </div>
           </div>
         </UCard>
@@ -67,7 +89,7 @@ const recentInvoices = computed(() => (listData.value?.invoices ?? []).slice(0, 
             </div>
             <div>
               <p class="text-sm text-muted">Paid</p>
-              <p class="text-xl font-semibold">{{ stats?.invoiceCountByStatus?.paid ?? 0 }}</p>
+              <p class="text-xl font-semibold">{{ displayPaidCount }}</p>
             </div>
           </div>
         </UCard>
@@ -92,15 +114,15 @@ const recentInvoices = computed(() => (listData.value?.invoices ?? []).slice(0, 
         >
           <template #status-data="{ row }">
             <UBadge
-              :color="(row as unknown as { status: string }).status === 'paid' ? 'success' : (row as unknown as { status: string }).status === 'overdue' ? 'error' : (row as unknown as { status: string }).status === 'sent' ? 'info' : 'neutral'"
+              :color="getRowBadgeColor(row)"
               variant="subtle"
               size="xs"
             >
-              {{ (row as unknown as { status: string }).status }}
+              {{ getRowBadgeLabel(row) }}
             </UBadge>
           </template>
           <template #total-data="{ row }">
-            {{ formatCents((row as unknown as { total: number }).total) }}
+            {{ rowTotal(row as { total?: number }) }}
           </template>
         </UTable>
         <p v-else class="py-8 text-center text-muted text-sm">No invoices yet. <ULink to="/invoices/new">Create one</ULink>.</p>

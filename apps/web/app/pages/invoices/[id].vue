@@ -3,12 +3,7 @@ definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()
 const id = computed(() => route.params.id as string)
-
-const { data, pending } = useAsyncData(
-  `invoice-${id.value}`,
-  () => $fetch<{ invoice: Record<string, unknown>; client: Record<string, unknown> | null; lineItems: Array<Record<string, unknown>> }>(`/api/invoices/${id.value}`),
-  { watch: [id] },
-)
+const { data, pending, refresh } = useInvoiceDetail(id)
 
 useSeo({
   title: 'Invoice — TinyInvoice',
@@ -22,17 +17,17 @@ const { formatCents } = useFormat()
 
 async function markSent() {
   await updateStatus(id.value, 'sent')
-  await refreshNuxtData(`invoice-${id.value}`)
+  await refresh()
 }
 
 async function markPaid() {
   await updateStatus(id.value, 'paid')
-  await refreshNuxtData(`invoice-${id.value}`)
+  await refresh()
 }
 
 async function markOverdue() {
   await updateStatus(id.value, 'overdue')
-  await refreshNuxtData(`invoice-${id.value}`)
+  await refresh()
 }
 
 function statusColor(s: string) {
@@ -40,6 +35,30 @@ function statusColor(s: string) {
   if (s === 'overdue') return 'error'
   if (s === 'sent') return 'info'
   return 'neutral'
+}
+
+const invoice = computed(() => data.value?.invoice)
+const invoiceNumber = computed(() => (invoice.value as { invoiceNumber?: string } | undefined)?.invoiceNumber ?? '')
+const invoiceStatus = computed(() => (invoice.value as { status?: string } | undefined)?.status ?? '')
+const issueDateStr = computed(() =>
+  new Date(((invoice.value as { issueDate?: number })?.issueDate ?? 0) * 1000).toLocaleDateString(),
+)
+const dueDateStr = computed(() =>
+  new Date(((invoice.value as { dueDate?: number })?.dueDate ?? 0) * 1000).toLocaleDateString(),
+)
+const client = computed(() => data.value?.client)
+const clientName = computed(() => (client.value as { name?: string } | undefined)?.name ?? '')
+const clientEmail = computed(() => (client.value as { email?: string } | undefined)?.email ?? '')
+const subtotal = computed(() => (invoice.value as { subtotal?: number } | undefined)?.subtotal ?? 0)
+const taxAmount = computed(() => (invoice.value as { taxAmount?: number } | undefined)?.taxAmount ?? 0)
+const total = computed(() => (invoice.value as { total?: number } | undefined)?.total ?? 0)
+const notes = computed(() => (invoice.value as { notes?: string } | undefined)?.notes ?? null)
+
+function rowUnitPrice(row: { unitPrice?: number }) {
+  return formatCents(row.unitPrice ?? 0)
+}
+function rowAmount(row: { amount?: number }) {
+  return formatCents(row.amount ?? 0)
 }
 </script>
 
@@ -49,7 +68,7 @@ function statusColor(s: string) {
       <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-muted" />
     </div>
     <template v-else-if="data?.invoice">
-      <UPageHeader :title="`Invoice ${(data.invoice as { invoiceNumber?: string }).invoiceNumber}`">
+      <UPageHeader :title="`Invoice ${invoiceNumber}`">
         <template #links>
           <UButton to="/invoices" variant="ghost" color="neutral">Back</UButton>
           <UButton :to="`/invoices/${id}/edit`" variant="outline" color="neutral" icon="i-lucide-pencil">Edit</UButton>
@@ -57,33 +76,22 @@ function statusColor(s: string) {
       </UPageHeader>
       <UCard class="card-base max-w-3xl">
         <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <UBadge :color="statusColor((data.invoice as { status?: string }).status ?? '')" variant="subtle">
-            {{ (data.invoice as { status?: string }).status }}
+          <UBadge :color="statusColor(invoiceStatus)" variant="subtle">
+            {{ invoiceStatus }}
           </UBadge>
-          <div v-if="(data.invoice as { status?: string }).status !== 'paid'" class="flex gap-2">
-            <UButton
-              v-if="(data.invoice as { status?: string }).status === 'draft'"
-              size="sm"
-              variant="outline"
-              @click="markSent"
-            >
+          <div v-if="invoiceStatus !== 'paid'" class="flex gap-2">
+            <UButton v-if="invoiceStatus === 'draft'" size="sm" variant="outline" @click="markSent">
               Mark sent
             </UButton>
             <UButton
-              v-if="(data.invoice as { status?: string }).status === 'sent' || (data.invoice as { status?: string }).status === 'overdue'"
+              v-if="invoiceStatus === 'sent' || invoiceStatus === 'overdue'"
               size="sm"
               color="success"
               @click="markPaid"
             >
               Mark paid
             </UButton>
-            <UButton
-              v-if="(data.invoice as { status?: string }).status === 'sent'"
-              size="sm"
-              variant="outline"
-              color="error"
-              @click="markOverdue"
-            >
+            <UButton v-if="invoiceStatus === 'sent'" size="sm" variant="outline" color="error" @click="markOverdue">
               Mark overdue
             </UButton>
           </div>
@@ -96,14 +104,14 @@ function statusColor(s: string) {
           </div>
           <div v-if="data.client">
             <p class="text-sm text-muted">To</p>
-            <p class="font-medium">{{ (data.client as { name?: string }).name }}</p>
-            <p class="text-sm text-muted">{{ (data.client as { email?: string }).email }}</p>
+            <p class="font-medium">{{ clientName }}</p>
+            <p class="text-sm text-muted">{{ clientEmail }}</p>
           </div>
         </div>
         <p class="text-sm text-muted mb-2">
-          Issue: {{ new Date(((data.invoice as { issueDate?: number }).issueDate ?? 0) * 1000).toLocaleDateString() }}
+          Issue: {{ issueDateStr }}
           &middot;
-          Due: {{ new Date(((data.invoice as { dueDate?: number }).dueDate ?? 0) * 1000).toLocaleDateString() }}
+          Due: {{ dueDateStr }}
         </p>
         <UTable
           :rows="data.lineItems"
@@ -115,28 +123,28 @@ function statusColor(s: string) {
           ] as any"
         >
           <template #unitPrice-data="{ row }">
-            {{ formatCents((row as { unitPrice?: number }).unitPrice ?? 0) }}
+            {{ rowUnitPrice(row as { unitPrice?: number }) }}
           </template>
           <template #amount-data="{ row }">
-            {{ formatCents((row as { amount?: number }).amount ?? 0) }}
+            {{ rowAmount(row as { amount?: number }) }}
           </template>
         </UTable>
         <div class="mt-6 flex flex-col items-end gap-1 text-sm">
           <div class="flex gap-8">
             <span class="text-muted">Subtotal</span>
-            <span>{{ formatCents((data.invoice as { subtotal?: number }).subtotal ?? 0) }}</span>
+            <span>{{ formatCents(subtotal) }}</span>
           </div>
           <div class="flex gap-8">
             <span class="text-muted">Tax</span>
-            <span>{{ formatCents((data.invoice as { taxAmount?: number }).taxAmount ?? 0) }}</span>
+            <span>{{ formatCents(taxAmount) }}</span>
           </div>
           <div class="flex gap-8 font-semibold text-base">
             <span>Total</span>
-            <span>{{ formatCents((data.invoice as { total?: number }).total ?? 0) }}</span>
+            <span>{{ formatCents(total) }}</span>
           </div>
         </div>
-        <p v-if="(data.invoice as { notes?: string }).notes" class="mt-6 pt-4 border-t border-default text-sm text-muted">
-          {{ (data.invoice as { notes?: string }).notes }}
+        <p v-if="notes" class="mt-6 pt-4 border-t border-default text-sm text-muted">
+          {{ notes }}
         </p>
       </UCard>
     </template>

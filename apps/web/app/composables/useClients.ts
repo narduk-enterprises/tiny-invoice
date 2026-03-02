@@ -1,5 +1,3 @@
-import type { Ref } from 'vue'
-
 export interface Client {
   id: string
   userId: string
@@ -15,11 +13,12 @@ export function useClients() {
     default: () => ({ clients: [] }),
     watch: false,
   })
+  const { $csrfFetch } = useNuxtApp()
 
   const clientList = computed(() => clients.value?.clients ?? [])
 
   async function createClient(body: { name: string; email: string; address?: string; phone?: string }) {
-    await $fetch<Client>('/api/clients', {
+    await $csrfFetch<Client>('/api/clients', {
       method: 'POST',
       body,
     })
@@ -30,7 +29,7 @@ export function useClients() {
     id: string,
     body: { name: string; email: string; address?: string; phone?: string },
   ) {
-    await $fetch<Client>(`/api/clients/${id}`, {
+    await $csrfFetch<Client>(`/api/clients/${id}`, {
       method: 'PUT',
       body,
     })
@@ -38,7 +37,7 @@ export function useClients() {
   }
 
   async function deleteClient(id: string) {
-    await $fetch(`/api/clients/${id}`, { method: 'DELETE' })
+    await $csrfFetch(`/api/clients/${id}`, { method: 'DELETE' })
     await refresh()
   }
 

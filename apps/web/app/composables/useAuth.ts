@@ -1,5 +1,3 @@
-import type { Ref } from 'vue'
-
 export interface AuthUser {
   id: string
   email: string
@@ -10,6 +8,7 @@ export interface AuthUser {
 
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
+  const { $csrfFetch } = useNuxtApp()
 
   async function fetchUser() {
     try {
@@ -23,7 +22,7 @@ export function useAuth() {
   }
 
   async function login(email: string, password: string) {
-    const data = await $fetch<{ user: AuthUser }>('/api/auth/login', {
+    const data = await $csrfFetch<{ user: AuthUser }>('/api/auth/login', {
       method: 'POST',
       body: { email, password },
     })
@@ -38,7 +37,7 @@ export function useAuth() {
     businessName?: string
     businessAddress?: string
   }) {
-    const data = await $fetch<{ user: AuthUser }>('/api/auth/register', {
+    const data = await $csrfFetch<{ user: AuthUser }>('/api/auth/register', {
       method: 'POST',
       body: params,
     })
@@ -47,12 +46,12 @@ export function useAuth() {
   }
 
   async function logout() {
-    await $fetch('/api/auth/logout', { method: 'POST' })
+    await $csrfFetch('/api/auth/logout', { method: 'POST' })
     user.value = null
   }
 
   return {
-    user: user as Ref<AuthUser | null>,
+    user,
     fetchUser,
     login,
     register,
