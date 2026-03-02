@@ -78,7 +78,7 @@ jobs:
 
   deploy:
     name: Deploy web
-    needs: [preflight]
+    needs: [quality, preflight]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
