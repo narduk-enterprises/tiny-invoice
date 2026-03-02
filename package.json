@@ -1,6 +1,6 @@
 {
   "name": "tiny-invoice",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "scripts": {
@@ -13,6 +13,7 @@
     "typecheck": "turbo run typecheck",
     "quality": "turbo run quality",
     "setup": "npx tsx tools/init.ts",
+    "update-layer": "npx tsx tools/update-layer.ts",
     "validate": "doppler run -- jiti tools/validate.ts",
     "clean": "find . -type d \\( -name node_modules -o -name .nuxt -o -name .output -o -name .nitro -o -name .wrangler -o -name .turbo -o -name .data -o -name dist \\) -not -path './.git/*' -prune -exec rm -rf {} +",
     "clean:install": "pnpm run clean && pnpm install && pnpm run db:ready:all",

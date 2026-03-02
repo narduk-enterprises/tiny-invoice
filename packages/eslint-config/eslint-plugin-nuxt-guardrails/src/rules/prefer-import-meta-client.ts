@@ -10,13 +10,13 @@ import type { PluginOptions } from '../types'
 
 export default {
   meta: {
-    type: 'suggestion',
+    type: 'suggestion' as const,
     docs: {
       description: 'prefer import.meta.client/server over process.client/server',
       category: 'Best Practices',
       recommended: true,
     },
-    fixable: 'code',
+    fixable: 'code' as const,
     schema: [
       {
         type: 'object',

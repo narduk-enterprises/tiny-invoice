@@ -21,7 +21,7 @@ const DEFAULT_WHITELIST = [
 
 export default {
   meta: {
-    type: 'suggestion',
+    type: 'suggestion' as const,
     docs: {
       description: 'disallow complex expressions in templates',
       category: 'Best Practices',

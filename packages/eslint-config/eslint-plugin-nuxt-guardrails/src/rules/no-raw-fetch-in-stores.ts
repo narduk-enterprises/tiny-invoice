@@ -12,7 +12,7 @@ const ALLOWED = new Set(['useAppFetch', 'useRequestFetch'])
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'disallow $fetch/useFetch in app/stores — use useAppFetch or useRequestFetch',
       category: 'Best Practices',

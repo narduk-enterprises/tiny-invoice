@@ -69,7 +69,7 @@ function isValidAsyncDataKey(node: any): boolean {
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'enforce valid useAsyncData usage',
       category: 'Best Practices',

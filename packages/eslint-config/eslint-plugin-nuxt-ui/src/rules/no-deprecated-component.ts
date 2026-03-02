@@ -15,13 +15,13 @@ const DEPRECATED_COMPONENTS: Record<string, string> = {
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'disallow deprecated Nuxt UI component names (v3 → v4 renames)',
       category: 'Possible Errors',
       recommended: true,
     },
-    fixable: 'code',
+    fixable: 'code' as const,
     schema: [
       {
         type: 'object',

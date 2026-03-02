@@ -11,7 +11,7 @@ const BARE_META = new Set(['useSeoMeta', 'useHead'])
 
 export default {
   meta: {
-    type: 'suggestion',
+    type: 'suggestion' as const,
     docs: {
       description: 'prefer useSeo() over bare useSeoMeta/useHead in pages',
       category: 'Best Practices',

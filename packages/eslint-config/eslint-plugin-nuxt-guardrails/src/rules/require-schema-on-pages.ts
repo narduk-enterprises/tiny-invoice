@@ -18,7 +18,7 @@ const SCHEMA_COMPOSABLES = new Set([
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'require a Schema.org composable in app/pages/*.vue',
       category: 'Best Practices',

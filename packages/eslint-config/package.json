@@ -1,6 +1,6 @@
 {
   "name": "@narduk/eslint-config",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "type": "module",
   "private": true,
   "exports": {
@@ -13,7 +13,7 @@
     "build:vue-official": "cd eslint-plugin-vue-official-best-practices && pnpm run build",
     "lint": "echo 'eslint-config: lint pass (config-only package)'",
     "typecheck": "pnpm run build",
-    "quality": "pnpm run lint && pnpm run typecheck",
+    "quality": "pnpm run lint && pnpm run typecheck && pnpm run test",
     "test": "vitest run",
     "test:plugins": "vitest run eslint-plugins/tests"
   },
@@ -28,6 +28,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.19.13",
+    "@typescript-eslint/parser": "^8.56.1",
+    "@typescript-eslint/rule-tester": "^8.56.1",
     "eslint": "^10.0.2",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",

@@ -11,7 +11,7 @@ const DOC_URL = 'https://nuxt.com/docs/api/composables/use-fetch'
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description:
         'disallow raw $fetch in script — use useAsyncData or useFetch for SSR-safe data fetching',

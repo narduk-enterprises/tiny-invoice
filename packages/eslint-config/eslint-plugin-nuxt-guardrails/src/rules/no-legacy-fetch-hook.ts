@@ -9,7 +9,7 @@ import { getApiSpec } from '../utils/spec-loader'
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'disallow legacy Nuxt 2 fetch() hook',
       category: 'Best Practices',

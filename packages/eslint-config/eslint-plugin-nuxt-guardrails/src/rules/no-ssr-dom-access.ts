@@ -9,7 +9,7 @@ import { isDomAccess, isInClientContext, isImportMetaClient } from '../utils/ast
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'disallow unguarded DOM access in server context',
       category: 'Best Practices',

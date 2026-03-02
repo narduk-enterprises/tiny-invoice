@@ -9,7 +9,7 @@ import type { Rule } from 'eslint'
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'require useSeo() in app/pages/*.vue for consistent SEO',
       category: 'Best Practices',

@@ -8,7 +8,7 @@ import type { Rule } from 'eslint'
 
 export default {
   meta: {
-    type: 'suggestion',
+    type: 'suggestion' as const,
     docs: {
       description:
         'prefer import.meta.dev over process.env.NODE_ENV for Vite/Nitro and Cloudflare Workers',
