@@ -9,7 +9,7 @@ import { getApiSpec } from '../utils/spec-loader'
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'enforce valid useFetch usage',
       category: 'Best Practices',

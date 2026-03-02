@@ -10,7 +10,7 @@ import type { Rule } from 'eslint'
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'disallow .map(async in server code — use batched queries to avoid N+1',
       category: 'Best Practices',

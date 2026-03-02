@@ -11,13 +11,13 @@ import { getApiSpec } from '../utils/spec-loader'
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'disallow legacy Options API head() method or head option',
       category: 'Best Practices',
       recommended: true,
     },
-    fixable: 'code',
+    fixable: 'code' as const,
     schema: [],
     messages: {
       legacyHeadMethod: 'Use useHead() composable instead of head() method. See: {{docUrl}}',

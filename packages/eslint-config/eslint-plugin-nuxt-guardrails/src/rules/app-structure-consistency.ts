@@ -11,7 +11,7 @@ import type { PluginOptions } from '../types'
 
 export default {
   meta: {
-    type: 'suggestion',
+    type: 'suggestion' as const,
     docs: {
       description: 'enforce consistent directory structure',
       recommended: true,

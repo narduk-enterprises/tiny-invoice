@@ -26,7 +26,7 @@ function referencesBrowserApi(node: any): boolean {
 
 export default {
   meta: {
-    type: 'problem',
+    type: 'problem' as const,
     docs: {
       description: 'plugins using browser APIs must use .client.ts suffix',
       category: 'Best Practices',
