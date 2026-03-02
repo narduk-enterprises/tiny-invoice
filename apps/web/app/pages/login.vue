@@ -36,6 +36,11 @@ async function onSubmit() {
     pending.value = false
   }
 }
+
+function fillDemoCredentials() {
+  state.value.email = 'demo@tinyinvoice.com'
+  state.value.password = 'demo1234'
+}
 </script>
 
 <template>
@@ -63,7 +68,7 @@ async function onSubmit() {
             <UButton
               variant="outline"
               :disabled="pending"
-              @click="state.email = 'demo@tinyinvoice.com'; state.password = 'demo1234'"
+              @click="fillDemoCredentials"
             >
               Fill demo credentials
             </UButton>

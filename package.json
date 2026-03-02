@@ -22,6 +22,7 @@
     "db:ready": "pnpm --filter web run db:ready",
     "dev:kill": "sh scripts/dev-kill.sh",
     "test:e2e": "playwright test",
+    "test:e2e:production": "BASE_URL=https://tiny-invoice.narduk.workers.dev playwright test",
     "generate:favicons": "npx tsx tools/generate-favicons.ts"
   },
   "pnpm": {
