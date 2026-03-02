@@ -123,6 +123,10 @@ jobs:
         working-directory: apps/web
         run: pnpm exec wrangler d1 execute tiny-invoice-db --remote --file=drizzle/0000_initial_schema.sql
 
+      - name: Run D1 seed (demo account + sample data)
+        working-directory: apps/web
+        run: pnpm run db:seed:remote
+
       - name: Build & Deploy
         working-directory: apps/web
         run: |
