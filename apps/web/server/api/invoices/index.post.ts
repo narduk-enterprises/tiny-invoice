@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
     .orderBy(desc(invoices.createdAt))
     .limit(1)
   const nextNum = last.length
-    ? parseInt(last[0]!.invoiceNumber.replace(/\D/g, ''), 10) + 1
+    ? Number.parseInt(last[0]!.invoiceNumber.replaceAll(/\D/g, ''), 10) + 1
     : 1
   const invoiceNumber = `INV-${String(nextNum).padStart(3, '0')}`
 

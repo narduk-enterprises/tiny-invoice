@@ -6,7 +6,7 @@
 const SALT_LENGTH = 16
 const ITERATIONS = 100_000
 const KEY_LENGTH = 256
-const HASH_LENGTH = 32
+const _HASH_LENGTH = 32
 
 function toHex(buf: ArrayBuffer | Uint8Array): string {
   const arr = buf instanceof Uint8Array ? buf : new Uint8Array(buf)
@@ -18,7 +18,7 @@ function toHex(buf: ArrayBuffer | Uint8Array): string {
 function fromHex(hex: string): Uint8Array {
   const out = new Uint8Array(hex.length / 2)
   for (let i = 0; i < hex.length; i += 2) {
-    out[i / 2] = parseInt(hex.slice(i, i + 2), 16)
+    out[i / 2] = Number.parseInt(hex.slice(i, i + 2), 16)
   }
   return out
 }

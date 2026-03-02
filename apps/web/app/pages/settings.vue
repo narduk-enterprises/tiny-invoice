@@ -7,8 +7,8 @@ useSeo({
 })
 useWebPageSchema({ name: 'Settings — TinyInvoice', description: 'Account and business settings.' })
 
-const { user, fetchUser } = useAuth()
-const config = useRuntimeConfig().public
+const { user } = useAuth()
+const { updateSettings } = useSettings()
 
 const formState = ref({
   businessName: '',
@@ -31,14 +31,10 @@ async function submit() {
   success.value = false
   saving.value = true
   try {
-    await $fetch('/api/settings', {
-      method: 'PUT',
-      body: {
-        businessName: formState.value.businessName || null,
-        businessAddress: formState.value.businessAddress || null,
-      },
+    await updateSettings({
+      businessName: formState.value.businessName || null,
+      businessAddress: formState.value.businessAddress || null,
     })
-    await fetchUser()
     success.value = true
   } catch (e: unknown) {
     const err = e as { data?: { message?: string }; message?: string }

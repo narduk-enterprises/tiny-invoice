@@ -5,11 +5,7 @@ const route = useRoute()
 const id = computed(() => route.params.id as string)
 const router = useRouter()
 
-const { data: invoiceData, pending: loadPending } = useAsyncData(
-  `invoice-edit-${id.value}`,
-  () => $fetch<{ invoice: Record<string, unknown>; client: Record<string, unknown> | null; lineItems: Array<Record<string, unknown> & { id: string; description: string; quantity: number; unitPrice: number }> }>(`/api/invoices/${id.value}`),
-  { watch: [id] },
-)
+const { data: invoiceData, pending: loadPending } = useInvoiceDetail(id)
 
 useSeo({
   title: 'Edit invoice — TinyInvoice',

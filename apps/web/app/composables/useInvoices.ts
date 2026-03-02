@@ -1,4 +1,5 @@
-import type { Ref } from 'vue'
+import type { MaybeRef, Ref } from 'vue'
+import { computed, isRef, ref } from 'vue'
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue'
 
@@ -42,6 +43,7 @@ export function useInvoices() {
     '/api/invoices',
     { default: () => ({ invoices: [] }), watch: false },
   )
+  const { $csrfFetch } = useNuxtApp()
 
   const invoices = computed(() => listData.value?.invoices ?? [])
 
@@ -53,7 +55,7 @@ export function useInvoices() {
     taxRate?: number
     lineItems: { description: string; quantity: number; unitPrice: number }[]
   }) {
-    const res = await $fetch<InvoiceDetail>('/api/invoices', {
+    const res = await $csrfFetch<InvoiceDetail>('/api/invoices', {
       method: 'POST',
       body,
     })
@@ -72,7 +74,7 @@ export function useInvoices() {
       lineItems: { description: string; quantity: number; unitPrice: number }[]
     },
   ) {
-    const res = await $fetch<InvoiceDetail>(`/api/invoices/${id}`, {
+    const res = await $csrfFetch<InvoiceDetail>(`/api/invoices/${id}`, {
       method: 'PUT',
       body,
     })
@@ -81,7 +83,7 @@ export function useInvoices() {
   }
 
   async function updateStatus(id: string, status: InvoiceStatus) {
-    await $fetch(`/api/invoices/${id}/status`, {
+    await $csrfFetch(`/api/invoices/${id}/status`, {
       method: 'PATCH',
       body: { status },
     })
@@ -89,7 +91,7 @@ export function useInvoices() {
   }
 
   async function deleteInvoice(id: string) {
-    await $fetch(`/api/invoices/${id}`, { method: 'DELETE' })
+    await $csrfFetch(`/api/invoices/${id}`, { method: 'DELETE' })
     await refreshList()
   }
 
@@ -102,4 +104,18 @@ export function useInvoices() {
     updateStatus,
     deleteInvoice,
   }
+}
+
+/* Normalize MaybeRef to Ref; ref() in branch is intentional */
+function toRefOrIdentity(r: MaybeRef<string>): Ref<string> {
+  // eslint-disable-next-line vue-official/no-composable-conditional-hooks -- normalize ref vs value
+  return isRef(r) ? r : ref(r)
+}
+
+export function useInvoiceDetail(invoiceId: MaybeRef<string>) {
+  const idRef = toRefOrIdentity(invoiceId)
+  const key = computed(() => `invoice-${idRef.value}`)
+  const fetcher = () => $fetch<InvoiceDetail>(`/api/invoices/${idRef.value}`)
+  /* eslint-disable-next-line nuxt-guardrails/valid-useAsyncData -- reactive key required for route param */
+  return useAsyncData(key, fetcher, { watch: [idRef] })
 }
