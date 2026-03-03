@@ -1,0 +1,58 @@
+/* TinyInvoice brand overrides — layer base (Tailwind, @theme, utilities) loads first */
+
+@theme {
+  /* Override only what differs from the layer; rest inherited */
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+  --radius-button: 0.625rem;
+
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --shadow-elevated: 0 4px 12px -2px rgb(0 0 0 / 0.07), 0 2px 6px -2px rgb(0 0 0 / 0.05);
+  --shadow-overlay: 0 12px 24px -4px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.05);
+}
+
+/* ─── Typography hierarchy (app-specific) ─── */
+.prose h1, .prose h2, .prose h3,
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Signature motif: focus glow ─── */
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-default, rgb(255 255 255)), 0 0 0 4px rgb(13 148 136 / 0.5);
+}
+
+.dark .focus-ring {
+  box-shadow: 0 0 0 2px var(--color-default, rgb(28 25 23)), 0 0 0 4px rgb(13 148 136 / 0.5);
+}
+
+/* ─── 8pt spacing rhythm (section padding) ─── */
+.section-padding {
+  padding-block: 2rem;
+}
+
+/* ─── Dark mode: brand shadow overrides (layer defines .shadow-* using vars) ─── */
+:root.dark,
+.scheme-dark {
+  --tw-shadow-color: rgb(0 0 0 / 0.35);
+}
+
+.dark .shadow-card {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.25), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+}
+
+.dark .shadow-elevated {
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.3), 0 2px 6px -2px rgb(0 0 0 / 0.2);
+}
+
+.dark .glass,
+.dark .glass-card {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2);
+}
