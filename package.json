@@ -22,11 +22,11 @@
     "db:ready": "pnpm --filter web run db:ready",
     "dev:kill": "sh scripts/dev-kill.sh",
     "test:e2e": "playwright test",
-    "test:e2e:production": "BASE_URL=https://tiny-invoice.narduk.workers.dev playwright test",
+    "test:e2e:production": "BASE_URL=https://tiny-invoice.nard.uk playwright test",
     "generate:favicons": "npx tsx tools/generate-favicons.ts",
-    "predev": "node tools/check-setup.js",
-    "prebuild": "node tools/check-setup.js",
-    "predeploy": "node tools/check-setup.js"
+    "predev": "node tools/check-setup.cjs",
+    "prebuild": "node tools/check-setup.cjs",
+    "predeploy": "node tools/check-setup.cjs"
   },
   "pnpm": {
     "overrides": {

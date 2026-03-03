@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/wrangler@latest/config-schema.json",
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/schemas/config/wrangler.json",
   "name": "tiny-invoice",
   "main": ".output/server/index.mjs",
   "assets": {
@@ -18,5 +18,8 @@
       "database_name": "tiny-invoice-db",
       "database_id": "e2260a6b-cdb6-47dd-aaa4-f0f39c2d7f5f"
     }
+  ],
+  "routes": [
+    { "pattern": "tiny-invoice.nard.uk", "custom_domain": true }
   ]
 }
