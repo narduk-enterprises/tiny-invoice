@@ -9,13 +9,16 @@ export interface Client {
 }
 
 export function useClients() {
-  const { data: clients, pending, refresh } = useFetch<{ clients: Client[] }>('/api/clients', {
+  const headers = useRequestHeaders(['cookie'])
+  const { data: clientsData, pending, refresh } = useFetch<{ clients: Client[] }>('/api/clients', {
+    key: 'clients',
+    headers,
     default: () => ({ clients: [] }),
     watch: false,
   })
   const { $csrfFetch } = useNuxtApp()
 
-  const clientList = computed(() => clients.value?.clients ?? [])
+  const clientList = computed(() => clientsData.value?.clients ?? [])
 
   async function createClient(body: { name: string; email: string; address?: string; phone?: string }) {
     await $csrfFetch<Client>('/api/clients', {

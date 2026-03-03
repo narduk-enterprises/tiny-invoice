@@ -4,15 +4,13 @@ const colorMode = useColorMode()
 const config = useRuntimeConfig().public
 const appName = config.appName || 'TinyInvoice'
 const { user, fetchUser, logout: doLogout } = useAuth()
+const toast = useToast()
 
 async function logout() {
   await doLogout()
+  toast.add({ title: "You're logged out", color: 'neutral' })
   await navigateTo('/')
 }
-
-onMounted(() => {
-  fetchUser()
-})
 
 const colorModeIcon = computed(() => {
   if (colorMode.preference === 'system') return 'i-lucide-monitor'
@@ -26,17 +24,15 @@ function cycleColorMode() {
 }
 
 const navItems = computed(() => {
-  const base = [{ label: 'Home', to: '/', icon: 'i-lucide-home' }]
   if (user.value) {
     return [
-      ...base,
-      { label: 'Dashboard', to: '/dashboard', icon: 'i-lucide-layout-dashboard' },
-      { label: 'Clients', to: '/clients', icon: 'i-lucide-users' },
-      { label: 'Invoices', to: '/invoices', icon: 'i-lucide-file-text' },
-      { label: 'Settings', to: '/settings', icon: 'i-lucide-settings' },
+      { label: 'Dashboard', to: '/dashboard', icon: 'i-lucide-layout-dashboard' as const },
+      { label: 'Clients', to: '/clients', icon: 'i-lucide-users' as const },
+      { label: 'Invoices', to: '/invoices', icon: 'i-lucide-file-text' as const },
+      { label: 'Settings', to: '/settings', icon: 'i-lucide-settings' as const },
     ]
   }
-  return base
+  return [{ label: 'Home', to: '/', icon: 'i-lucide-home' as const }]
 })
 
 const mobileMenuOpen = ref(false)
@@ -44,18 +40,20 @@ const mobileMenuOpen = ref(false)
 watch(route, () => {
   mobileMenuOpen.value = false
 })
+
+onMounted(() => {
+  fetchUser()
+})
 </script>
 
 <template>
   <UApp>
     <ULink to="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg">Skip to content</ULink>
     <div class="app-shell min-h-screen flex flex-col">
-      <div class="sticky top-0 z-50 border-b border-default bg-default/80 backdrop-blur-xl">
+      <div class="sticky top-0 z-50 border-b border-default glass">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center gap-2.5 group">
-            <div class="size-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">
-              TI
-            </div>
+          <NuxtLink to="/" class="flex items-center gap-2.5 group transition-opacity duration-200 hover:opacity-90">
+            <img src="/favicon.svg" alt="" class="size-8 rounded-lg shrink-0" width="32" height="32" />
             <span class="font-display font-semibold text-lg hidden sm:block">{{ appName }}</span>
           </NuxtLink>
 
@@ -64,7 +62,7 @@ watch(route, () => {
               v-for="item in navItems"
               :key="item.to"
               :to="item.to"
-              class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+              class="px-3 py-2 text-sm font-medium rounded-lg transition-base"
               :class="route.path === item.to
                 ? 'text-primary bg-primary/10'
                 : 'text-muted hover:text-default hover:bg-elevated'"
@@ -75,11 +73,11 @@ watch(route, () => {
 
           <div class="flex items-center gap-2">
             <template v-if="user">
-              <UButton to="/settings" variant="ghost" color="neutral" icon="i-lucide-user" />
+              <UButton to="/settings" variant="ghost" color="neutral" icon="i-lucide-user" aria-label="Settings" />
               <UButton variant="outline" color="neutral" class="hidden md:inline-flex" @click="logout">Logout</UButton>
             </template>
             <template v-else>
-              <UButton to="/login" variant="ghost" color="neutral">Login</UButton>
+              <UButton to="/login" variant="ghost" color="neutral">Log in</UButton>
               <UButton to="/register" color="primary">Register</UButton>
             </template>
             <UButton
@@ -122,10 +120,10 @@ watch(route, () => {
         </div>
       </div>
 
-      <div class="border-t border-default py-6">
+      <div class="border-t border-default py-6 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p class="text-center text-sm text-muted">
-            {{ appName }} &middot; Nuxt UI 4 &middot; Cloudflare Workers &middot; <NuxtTime :datetime="new Date()" year="numeric" />
+          <p class="text-center text-sm text-muted tabular-nums">
+            {{ appName }} · <NuxtTime :datetime="new Date()" year="numeric" />
           </p>
         </div>
       </div>

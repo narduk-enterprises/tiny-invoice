@@ -49,19 +49,28 @@ async function submit() {
   <UPage>
     <UPageHeader title="Settings" description="Update your business details for invoices." />
     <UCard class="card-base max-w-lg">
-      <UForm :state="formState" @submit="submit">
-        <div class="space-y-4">
-          <UFormField label="Business name" name="businessName">
-            <UInput v-model="formState.businessName" placeholder="My Freelance Co" />
-          </UFormField>
-          <UFormField label="Business address" name="businessAddress">
-            <UTextarea v-model="formState.businessAddress" placeholder="123 Main St, City, ST 12345" :rows="3" />
-          </UFormField>
+      <div class="p-5">
+        <UForm :state="formState" @submit="submit">
+          <div class="form-section">
+            <UFormField label="Business name (optional)" name="businessName">
+              <UInput v-model="formState.businessName" placeholder="My Freelance Co" class="w-full" />
+            </UFormField>
+            <UFormField label="Business address (optional)" name="businessAddress">
+              <UTextarea
+                v-model="formState.businessAddress"
+                placeholder="123 Main St, City, ST 12345"
+                :rows="3"
+                class="w-full min-h-[5rem]"
+              />
+            </UFormField>
+          </div>
           <UAlert v-if="error" color="error" :title="error" class="text-sm" />
           <UAlert v-if="success" color="success" title="Settings saved." class="text-sm" />
-          <UButton type="submit" :loading="saving">Save</UButton>
-        </div>
-      </UForm>
+          <div class="form-actions">
+            <UButton type="submit" :loading="saving">Save</UButton>
+          </div>
+        </UForm>
+      </div>
     </UCard>
   </UPage>
 </template>

@@ -11,6 +11,7 @@ const { clients, pending: clientsPending } = useClients()
 const { createInvoice } = useInvoices()
 const router = useRouter()
 const { formatCents } = useFormat()
+const toast = useToast()
 
 const clientId = ref('')
 const clientSelect = computed({
@@ -29,12 +30,12 @@ interface LineRow {
   unitPrice: number
 }
 const lineItems = ref<LineRow[]>([
-  { id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0 },
+  { id: 'row-0', description: '', quantity: 1, unitPrice: 0 },
 ])
 
 function addLine() {
   lineItems.value.push({
-    id: crypto.randomUUID(),
+    id: nextRowId(),
     description: '',
     quantity: 1,
     unitPrice: 0,
@@ -64,6 +65,10 @@ onMounted(() => {
   const due = new Date(now.getTime() + 30 * 86400 * 1000)
   dueDate.value = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`
 })
+function nextRowId(): string {
+  if (import.meta.client && typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return `row-${Date.now()}`
+}
 
 async function submit() {
   error.value = ''
@@ -90,6 +95,7 @@ async function submit() {
         unitPrice: r.unitPrice,
       })),
     })
+    toast.add({ title: 'Invoice created', color: 'success' })
     await router.push(`/invoices/${res.invoice.id}`)
   } catch (e: unknown) {
     const err = e as { data?: { message?: string }; message?: string }
@@ -108,9 +114,10 @@ async function submit() {
       </template>
     </UPageHeader>
     <UCard class="card-base max-w-3xl">
-      <div v-if="clientsPending" class="py-8 text-center text-muted">Loading clients…</div>
+      <div v-if="clientsPending" class="py-12 text-center text-muted">Loading clients…</div>
       <UForm v-else :state="{}" @submit="submit">
-        <div class="space-y-6">
+        <div class="p-5 form-section">
+          <p class="text-sm font-medium text-muted mb-3">Client & dates</p>
           <UFormField label="Client" required>
             <USelectMenu
               v-model="clientSelect"
@@ -125,21 +132,22 @@ async function submit() {
           </UFormField>
           <div class="grid gap-4 sm:grid-cols-2">
             <UFormField label="Issue date" required>
-              <UInput v-model="issueDate" type="date" />
+              <UInput v-model="issueDate" type="date" class="w-full" />
             </UFormField>
             <UFormField label="Due date" required>
-              <UInput v-model="dueDate" type="date" />
+              <UInput v-model="dueDate" type="date" class="w-full" />
             </UFormField>
           </div>
-          <UFormField label="Notes">
-            <UTextarea v-model="notes" placeholder="Thank you for your business." :rows="2" />
+          <UFormField label="Notes (optional)">
+            <UTextarea v-model="notes" placeholder="Thank you for your business." :rows="2" class="w-full" />
           </UFormField>
-          <UFormField label="Tax rate (%)">
-            <UInput v-model.number="taxRate" type="number" min="0" max="100" step="0.01" placeholder="0" />
+          <UFormField label="Tax rate (%) (optional)">
+            <UInput v-model.number="taxRate" type="number" min="0" max="100" step="0.01" placeholder="0" class="w-full" />
           </UFormField>
+          <p class="text-sm font-medium text-muted mb-3 mt-6">Line items</p>
           <div>
             <div class="mb-2 flex items-center justify-between">
-              <span class="font-medium">Line items</span>
+              <span class="font-medium">Items</span>
               <UButton type="button" variant="ghost" size="sm" icon="i-lucide-plus" @click="addLine">Add line</UButton>
             </div>
             <div class="space-y-3">
@@ -149,13 +157,13 @@ async function submit() {
                 class="grid grid-cols-12 gap-2 items-end"
               >
                 <div class="col-span-12 sm:col-span-5">
-                  <UInput v-model="row.description" placeholder="Description" />
+                  <UInput v-model="row.description" placeholder="Description" class="w-full" />
                 </div>
                 <div class="col-span-4 sm:col-span-2">
-                  <UInput v-model.number="row.quantity" type="number" min="1" placeholder="Qty" />
+                  <UInput v-model.number="row.quantity" type="number" min="1" placeholder="Qty" class="w-full" />
                 </div>
                 <div class="col-span-4 sm:col-span-2">
-                  <UInput v-model.number="row.unitPrice" type="number" min="0" placeholder="Unit price (¢)" />
+                  <UInput v-model.number="row.unitPrice" type="number" min="0" placeholder="Unit price" class="w-full" />
                 </div>
                 <div class="col-span-2 sm:col-span-2 text-sm text-muted">
                   {{ formatCents(row.quantity * row.unitPrice) }}
@@ -167,6 +175,7 @@ async function submit() {
                     color="error"
                     size="xs"
                     icon="i-lucide-trash-2"
+                    :aria-label="lineItems.length <= 1 ? 'Remove line (at least one line required)' : 'Remove line'"
                     :disabled="lineItems.length <= 1"
                     @click="removeLine(row.id)"
                   />
@@ -174,7 +183,8 @@ async function submit() {
               </div>
             </div>
           </div>
-          <USeparator />
+          <USeparator class="my-4" />
+          <p class="text-sm font-medium text-muted mb-2">Totals</p>
           <div class="flex justify-end gap-4 text-sm">
             <span class="text-muted">Subtotal:</span>
             <span>{{ formatCents(subtotal) }}</span>
@@ -188,9 +198,8 @@ async function submit() {
             <span>{{ formatCents(total) }}</span>
           </div>
           <UAlert v-if="error" color="error" :title="error" class="text-sm" />
-          <div class="flex gap-2">
+          <div class="form-actions">
             <UButton type="submit" :loading="saving">Create invoice</UButton>
-            <UButton to="/invoices" variant="ghost" color="neutral">Cancel</UButton>
           </div>
         </div>
       </UForm>
