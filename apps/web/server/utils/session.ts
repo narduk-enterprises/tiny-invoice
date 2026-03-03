@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { getCookie, setCookie, deleteCookie } from 'h3'
+import { getCookie, setCookie, deleteCookie, getRequestHeader } from 'h3'
 import { eq, and, gt } from 'drizzle-orm'
 import type { User } from '../database/schema'
 import { sessions, users } from '../database/schema'
@@ -26,9 +26,11 @@ export async function createSession(event: H3Event, userId: string): Promise<str
     expiresAt,
     createdAt,
   })
+  const host = getRequestHeader(event, 'host') ?? ''
+  const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1')
   setCookie(event, SESSION_COOKIE, id, {
     httpOnly: true,
-    secure: true,
+    secure: !isLocalhost,
     sameSite: 'lax',
     maxAge: SESSION_DAYS * 86400,
     path: '/',

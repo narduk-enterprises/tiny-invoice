@@ -7,8 +7,21 @@ useSeo({
 })
 useWebPageSchema({ name: 'Log in — TinyInvoice', description: 'Log in to your account.' })
 
+const route = useRoute()
 const { login } = useAuth()
 const router = useRouter()
+const toast = useToast()
+
+// Pre-fill demo credentials when arriving via "Try demo" (e.g. /login?demo=1)
+onMounted(() => {
+  if (route.query.demo) {
+    fillDemoCredentials()
+  }
+  nextTick(() => {
+    const el = document.querySelector<HTMLInputElement>('[data-autofocus]')
+    el?.focus()
+  })
+})
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -23,12 +36,20 @@ const state = ref({
 const error = ref('')
 const pending = ref(false)
 
+function isValidRedirect(path: unknown): path is string {
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) return false
+  return true
+}
+
 async function onSubmit() {
   error.value = ''
   pending.value = true
   try {
     await login(state.value.email, state.value.password)
-    await router.push('/dashboard')
+    toast.add({ title: 'Logged in', color: 'success' })
+    const redirect = route.query.redirect
+    const target = isValidRedirect(redirect) ? redirect : '/dashboard'
+    await router.push(target)
   } catch (e: unknown) {
     const err = e as { data?: { message?: string }; message?: string }
     error.value = err.data?.message ?? err.message ?? 'Login failed'
@@ -38,47 +59,41 @@ async function onSubmit() {
 }
 
 function fillDemoCredentials() {
-  state.value.email = 'demo@tinyinvoice.com'
-  state.value.password = 'demo1234'
+  state.value = {
+    email: 'demo@tinyinvoice.com',
+    password: 'demo1234',
+  }
 }
 </script>
 
 <template>
   <UPage>
-    <UPageHeader title="Log in" description="Sign in to your account." />
-    <UCard class="max-w-md mx-auto card-base">
-      <UAlert
-        color="primary"
-        variant="soft"
-        title="Try the demo"
-        description="Log in with demo@tinyinvoice.com / demo1234 to explore sample clients, invoices (draft, sent, paid, overdue), and settings."
-        class="mb-4"
-      />
-      <UForm :schema="schema" :state="state" @submit="onSubmit">
-        <div class="space-y-4">
-          <UFormField label="Email" name="email" required>
-            <UInput v-model="state.email" type="email" placeholder="you@example.com" />
-          </UFormField>
-          <UFormField label="Password" name="password" required>
-            <UInput v-model="state.password" type="password" placeholder="••••••••" />
-          </UFormField>
-          <UAlert v-if="error" color="error" :title="error" class="text-sm" />
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <UButton type="submit" :loading="pending" block>Log in</UButton>
-            <UButton
-              variant="outline"
-              :disabled="pending"
-              @click="fillDemoCredentials"
-            >
-              Fill demo credentials
-            </UButton>
+    <UPageHeader title="Log in" description="Sign in to your account." class="animate-count-in" />
+    <UCard class="max-w-md mx-auto glass-card shadow-elevated animate-count-in" style="animation-delay: 0.05s">
+      <div class="p-5">
+        <p class="text-sm text-muted mb-4">
+          Demo: demo@tinyinvoice.com / demo1234
+          <UButton variant="link" color="primary" size="xs" class="ml-1" @click="fillDemoCredentials">Fill</UButton>
+        </p>
+        <UForm :schema="schema" :state="state" @submit="onSubmit">
+          <div class="form-section">
+            <UFormField label="Email" name="email" required>
+              <UInput v-model="state.email" type="email" placeholder="you@example.com" class="w-full" data-autofocus />
+            </UFormField>
+            <UFormField label="Password" name="password" required>
+              <UInput v-model="state.password" type="password" placeholder="••••••••" class="w-full" />
+            </UFormField>
           </div>
-          <p class="text-sm text-muted text-center sm:text-left">
+          <UAlert v-if="error" color="error" :title="error" class="text-sm" />
+          <div class="form-actions">
+            <UButton type="submit" :loading="pending" block>Log in</UButton>
+          </div>
+          <p class="text-sm text-muted text-center sm:text-left pt-2">
             Don't have an account?
             <ULink to="/register" class="text-primary font-medium">Register</ULink>
           </p>
-        </div>
-      </UForm>
+        </UForm>
+      </div>
     </UCard>
   </UPage>
 </template>

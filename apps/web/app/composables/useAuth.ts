@@ -7,18 +7,20 @@ export interface AuthUser {
 }
 
 export function useAuth() {
-  const user = useState<AuthUser | null>('auth-user', () => null)
   const { $csrfFetch } = useNuxtApp()
+  const headers = useRequestHeaders(['cookie'])
+  const { data: meData, refresh } = useFetch<{ user: AuthUser | null }>('/api/auth/me', {
+    key: 'auth-me',
+    headers,
+    default: () => ({ user: null }),
+    watch: false,
+  })
+
+  const user = computed(() => meData.value?.user ?? null)
 
   async function fetchUser() {
-    try {
-      const data = await $fetch<{ user: AuthUser }>('/api/auth/me')
-      user.value = data.user
-      return data.user
-    } catch {
-      user.value = null
-      return null
-    }
+    await refresh()
+    return user.value
   }
 
   async function login(email: string, password: string) {
@@ -26,7 +28,7 @@ export function useAuth() {
       method: 'POST',
       body: { email, password },
     })
-    user.value = data.user
+    await refresh()
     return data.user
   }
 
@@ -41,13 +43,13 @@ export function useAuth() {
       method: 'POST',
       body: params,
     })
-    user.value = data.user
+    await refresh()
     return data.user
   }
 
   async function logout() {
     await $csrfFetch('/api/auth/logout', { method: 'POST' })
-    user.value = null
+    await refresh()
   }
 
   return {

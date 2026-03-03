@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#10b981"/>
-  <text x="5" y="24" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="white">N4</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+  <rect width="32" height="32" rx="8" fill="#0d9488"/>
+  <g fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 7h11l3 3v12H9V7z"/>
+    <path d="M20 7v3h3"/>
+    <line x1="11" y1="14" x2="21" y2="14"/>
+    <line x1="11" y1="17" x2="17" y2="17"/>
+    <line x1="11" y1="20" x2="19" y2="20"/>
+  </g>
 </svg>

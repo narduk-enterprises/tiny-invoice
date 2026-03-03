@@ -21,6 +21,17 @@ export default defineNuxtConfig({
     compatibilityVersion: 4
   },
 
+  css: ['~/assets/css/main.css'],
+
+  fonts: {
+    families: [
+      { name: 'Inter', provider: 'google' },
+      { name: 'Plus Jakarta Sans', provider: 'google' },
+    ],
+  },
+
+
+
   runtimeConfig: {
     // Server-only (admin API routes)
     googleServiceAccountKey: process.env.GSC_SERVICE_ACCOUNT_JSON || '',
@@ -43,7 +54,7 @@ export default defineNuxtConfig({
   site: {
     url: process.env.SITE_URL || 'https://narduk.workers.dev',
     name: 'TinyInvoice',
-    description: 'TinyInvoice — powered by Nuxt 4 and Cloudflare Workers.',
+    description: 'Professional invoicing for freelancers. Create invoices, manage clients, track payments.',
     defaultLocale: 'en',
   },
 
@@ -60,5 +71,16 @@ export default defineNuxtConfig({
     cloudflare: {
       baseURL: process.env.SITE_URL || 'https://narduk.workers.dev',
     },
+  },
+
+  routeRules: {
+    '/': { prerender: true },
+    '/login': { ssr: true },
+    '/register': { ssr: true },
+    '/dashboard': { ssr: true },
+    '/clients': { ssr: true },
+    '/invoices': { ssr: true },
+    '/invoices/**': { ssr: true },
+    '/settings': { ssr: true },
   },
 })

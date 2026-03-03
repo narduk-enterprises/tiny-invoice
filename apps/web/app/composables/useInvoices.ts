@@ -39,9 +39,17 @@ export interface InvoiceDetail {
 }
 
 export function useInvoices() {
+  const { user } = useAuth()
+  const headers = useRequestHeaders(['cookie'])
+  const listKey = computed(() => `invoices-${user.value?.id ?? 'anon'}`)
   const { data: listData, pending: listPending, refresh: refreshList } = useFetch<{ invoices: InvoiceListItem[] }>(
     '/api/invoices',
-    { default: () => ({ invoices: [] }), watch: false },
+    {
+      key: listKey,
+      headers,
+      default: () => ({ invoices: [] }),
+      watch: false,
+    },
   )
   const { $csrfFetch } = useNuxtApp()
 
@@ -115,7 +123,8 @@ function toRefOrIdentity(r: MaybeRef<string>): Ref<string> {
 export function useInvoiceDetail(invoiceId: MaybeRef<string>) {
   const idRef = toRefOrIdentity(invoiceId)
   const key = computed(() => `invoice-${idRef.value}`)
-  const fetcher = () => $fetch<InvoiceDetail>(`/api/invoices/${idRef.value}`)
+  const headers = useRequestHeaders(['cookie'])
+  const fetcher = () => $fetch<InvoiceDetail>(`/api/invoices/${idRef.value}`, { headers })
   /* eslint-disable-next-line nuxt-guardrails/valid-useAsyncData -- reactive key required for route param */
   return useAsyncData(key, fetcher, { watch: [idRef] })
 }

@@ -16,6 +16,7 @@ useWebPageSchema({ name: 'Edit invoice — TinyInvoice', description: 'Edit invo
 const { clients } = useClients()
 const { updateInvoice } = useInvoices()
 const { formatCents } = useFormat()
+const toast = useToast()
 
 const clientId = ref('')
 const clientSelect = computed({
@@ -50,12 +51,17 @@ watch(invoiceData, (d) => {
     unitPrice: r.unitPrice,
   }))
   if (lineItems.value.length === 0) {
-    lineItems.value = [{ id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0 }]
+    lineItems.value = [{ id: 'row-0', description: '', quantity: 1, unitPrice: 0 }]
   }
 }, { immediate: true })
 
+function nextRowId(): string {
+  if (import.meta.client && typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return `row-${Date.now()}`
+}
+
 function addLine() {
-  lineItems.value.push({ id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0 })
+  lineItems.value.push({ id: nextRowId(), description: '', quantity: 1, unitPrice: 0 })
 }
 
 function removeLine(rowId: string) {
@@ -87,6 +93,7 @@ async function submit() {
       taxRate: taxRate.value ? Math.round(taxRate.value * 100) : undefined,
       lineItems: valid.map((r) => ({ description: r.description.trim(), quantity: r.quantity, unitPrice: r.unitPrice })),
     })
+    toast.add({ title: 'Invoice updated', color: 'success' })
     await router.push(`/invoices/${id.value}`)
   } catch (e: unknown) {
     const err = e as { data?: { message?: string }; message?: string }
@@ -105,10 +112,16 @@ async function submit() {
       </template>
     </UPageHeader>
     <div v-if="loadPending" class="py-12 text-center text-muted">Loading…</div>
-    <UCard v-else-if="invoiceData?.invoice" class="card-base max-w-3xl">
-      <UForm :state="{}" @submit="submit">
-        <div class="space-y-6">
-          <UFormField label="Client" required>
+    <div v-else-if="!invoiceData?.invoice" class="py-12 text-center text-muted">
+      <p>This invoice may have been deleted or you don't have access.</p>
+      <UButton to="/invoices" variant="outline" color="neutral" class="mt-4">Back to invoices</UButton>
+    </div>
+    <UCard v-else class="card-base max-w-3xl">
+      <div class="p-5">
+        <UForm :state="{}" @submit="submit">
+          <p class="text-sm font-medium text-muted mb-3">Client & dates</p>
+          <div class="form-section">
+            <UFormField label="Client" required>
             <USelectMenu
               v-model="clientSelect"
               :items="clients"
@@ -122,33 +135,34 @@ async function submit() {
           </UFormField>
           <div class="grid gap-4 sm:grid-cols-2">
             <UFormField label="Issue date" required>
-              <UInput v-model="issueDate" type="date" />
+              <UInput v-model="issueDate" type="date" class="w-full" />
             </UFormField>
             <UFormField label="Due date" required>
-              <UInput v-model="dueDate" type="date" />
+              <UInput v-model="dueDate" type="date" class="w-full" />
             </UFormField>
           </div>
-          <UFormField label="Notes">
-            <UTextarea v-model="notes" :rows="2" />
+          <UFormField label="Notes (optional)">
+            <UTextarea v-model="notes" :rows="2" class="w-full" />
           </UFormField>
-          <UFormField label="Tax rate (%)">
-            <UInput v-model.number="taxRate" type="number" min="0" max="100" step="0.01" />
+          <UFormField label="Tax rate (%) (optional)">
+            <UInput v-model.number="taxRate" type="number" min="0" max="100" step="0.01" class="w-full" />
           </UFormField>
+          <p class="text-sm font-medium text-muted mb-3 mt-6">Line items</p>
           <div>
             <div class="mb-2 flex items-center justify-between">
-              <span class="font-medium">Line items</span>
+              <span class="font-medium">Items</span>
               <UButton type="button" variant="ghost" size="sm" icon="i-lucide-plus" @click="addLine">Add line</UButton>
             </div>
             <div class="space-y-3">
               <div v-for="row in lineItems" :key="row.id" class="grid grid-cols-12 gap-2 items-end">
                 <div class="col-span-12 sm:col-span-5">
-                  <UInput v-model="row.description" placeholder="Description" />
+                  <UInput v-model="row.description" placeholder="Description" class="w-full" />
                 </div>
                 <div class="col-span-4 sm:col-span-2">
-                  <UInput v-model.number="row.quantity" type="number" min="1" placeholder="Qty" />
+                  <UInput v-model.number="row.quantity" type="number" min="1" placeholder="Qty" class="w-full" />
                 </div>
                 <div class="col-span-4 sm:col-span-2">
-                  <UInput v-model.number="row.unitPrice" type="number" min="0" placeholder="Unit price (¢)" />
+                  <UInput v-model.number="row.unitPrice" type="number" min="0" placeholder="Unit price" class="w-full" />
                 </div>
                 <div class="col-span-2 sm:col-span-2 text-sm text-muted">
                   {{ formatCents(row.quantity * row.unitPrice) }}
@@ -160,6 +174,7 @@ async function submit() {
                     color="error"
                     size="xs"
                     icon="i-lucide-trash-2"
+                    :aria-label="lineItems.length <= 1 ? 'Remove line (at least one line required)' : 'Remove line'"
                     :disabled="lineItems.length <= 1"
                     @click="removeLine(row.id)"
                   />
@@ -167,15 +182,18 @@ async function submit() {
               </div>
             </div>
           </div>
-          <USeparator />
+          <USeparator class="my-4" />
           <div class="flex justify-end gap-4 font-semibold">
             <span>Total:</span>
             <span>{{ formatCents(total) }}</span>
           </div>
           <UAlert v-if="error" color="error" :title="error" class="text-sm" />
-          <UButton type="submit" :loading="saving">Save changes</UButton>
-        </div>
-      </UForm>
+          <div class="form-actions">
+            <UButton type="submit" :loading="saving">Save changes</UButton>
+          </div>
+          </div>
+        </UForm>
+      </div>
     </UCard>
   </UPage>
 </template>
