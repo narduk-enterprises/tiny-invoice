@@ -12,7 +12,7 @@ You are building a **simple task-list application** called `example-tasks` by us
 
 1. Clone the template repository to a new directory:
    ```bash
-   git clone https://github.com/loganrenz/tiny-invoice.git example-tasks
+   git clone https://github.com/narduk-enterprises/tiny-invoice.git example-tasks
    cd example-tasks
    ```
 2. Clear the template's git history and set up your own repository (Required for GitHub CI secrets to bind properly):
@@ -70,7 +70,7 @@ apps/web/
 
 #### `nuxt.config.ts`
 
-- Ensure `extends: ['@loganrenz/tiny-invoice-layer']` remains.
+- Ensure `extends: ['@narduk-enterprises/tiny-invoice-layer']` remains.
 - Add `modules: ['nitro-cloudflare-dev']` with `nitro.cloudflareDev.configPath` pointing to local `wrangler.json` (Required to access the local D1 database during development).
 - Ensure `site` metadata matches "Tasks Example".
 
@@ -90,7 +90,7 @@ apps/web/
 
 ```ts
 // Re-export the layer base schema, then add app-specific tables
-export * from '@loganrenz/tiny-invoice-layer/server/database/schema';
+export * from '@narduk-enterprises/tiny-invoice-layer/server/database/schema';
 
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
@@ -271,7 +271,7 @@ When complete, this project will have validated:
 | Subsystem                  | How It's Tested                                                     |
 | -------------------------- | ------------------------------------------------------------------- |
 | **Project Initialization** | Template clone, `init.ts` setup + automated cleanup                 |
-| **Layer inheritance**      | `extends: ['@loganrenz/tiny-invoice-layer']` in nuxt.config |
+| **Layer inheritance**      | `extends: ['@narduk-enterprises/tiny-invoice-layer']` in nuxt.config |
 | **Nuxt 4 structure**       | `app/` directory with `future: { compatibilityVersion: 4 }`         |
 | **D1 + Drizzle**           | `tasks` table via Drizzle ORM with D1 binding                       |
 | **Cloudflare Workers**     | `wrangler.json` + `nitro` config + no Node.js APIs                  |
@@ -296,4 +296,4 @@ When complete, this project will have validated:
 - **NO duplicating layer files** — don't recreate `useSeo`, `useSchemaOrg`, plugins, or middleware.
 - **DO call `useSeo()` + `useWebPageSchema()`** on every page.
 - **DO use Nuxt UI 4 components** — `USeparator` (not `UDivider`), `i-lucide-*` icons.
-- **DO use `@loganrenz/tiny-invoice-layer` as workspace dependency** — never copy layer code.
+- **DO use `@narduk-enterprises/tiny-invoice-layer` as workspace dependency** — never copy layer code.

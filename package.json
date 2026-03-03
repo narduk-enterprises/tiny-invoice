@@ -23,7 +23,10 @@
     "dev:kill": "sh scripts/dev-kill.sh",
     "test:e2e": "playwright test",
     "test:e2e:production": "BASE_URL=https://tiny-invoice.narduk.workers.dev playwright test",
-    "generate:favicons": "npx tsx tools/generate-favicons.ts"
+    "generate:favicons": "npx tsx tools/generate-favicons.ts",
+    "predev": "node tools/check-setup.js",
+    "prebuild": "node tools/check-setup.js",
+    "predeploy": "node tools/check-setup.js"
   },
   "pnpm": {
     "overrides": {
@@ -51,6 +54,7 @@
     "@types/node": "^22.19.13",
     "concurrently": "^9.2.1",
     "sharp": "^0.34.5",
-    "turbo": "^2.8.12"
+    "turbo": "^2.8.12",
+    "tsx": "^4.21.0"
   }
 }
