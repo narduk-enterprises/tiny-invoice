@@ -1,7 +1,7 @@
 /**
  * Exhaustive E2E tests for TinyInvoice (demo account + public flows).
  * Run locally: pnpm run db:ready && pnpm test:e2e
- * Run vs production: BASE_URL=https://tiny-invoice.narduk.workers.dev pnpm test:e2e
+ * Run vs production: BASE_URL=https://tiny-invoice.nard.uk pnpm test:e2e
  */
 import { test, expect } from '@playwright/test'
 
