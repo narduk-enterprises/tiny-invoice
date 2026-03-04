@@ -3,7 +3,7 @@
 **tiny-invoice** — initialized from `narduk-nuxt-template`.
 
 ## Live Site
-[https://tiny-invoice.narduk.workers.dev](https://tiny-invoice.narduk.workers.dev)
+[https://tiny-invoice.nard.uk](https://tiny-invoice.nard.uk)
 
 ## Local Development
 
