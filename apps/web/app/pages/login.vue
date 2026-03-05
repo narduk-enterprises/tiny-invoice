@@ -2,6 +2,7 @@
 import { z } from 'zod'
 
 useSeo({
+  robots: 'noindex',
   title: 'Log in — TinyInvoice',
   description: 'Log in to your TinyInvoice account.',
 })

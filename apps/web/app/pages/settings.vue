@@ -2,6 +2,7 @@
 definePageMeta({ middleware: 'auth' })
 
 useSeo({
+  robots: 'noindex',
   title: 'Settings — TinyInvoice',
   description: 'Update your business details.',
 })
