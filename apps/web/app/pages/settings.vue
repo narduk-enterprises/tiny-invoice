@@ -16,12 +16,16 @@ const formState = ref({
   businessAddress: '',
 })
 
-watch(user, (u) => {
-  if (u) {
-    formState.value.businessName = u.businessName ?? ''
-    formState.value.businessAddress = u.businessAddress ?? ''
-  }
-}, { immediate: true })
+watch(
+  user,
+  (u) => {
+    if (u) {
+      formState.value.businessName = (u.businessName as string) ?? ''
+      formState.value.businessAddress = (u.businessAddress as string) ?? ''
+    }
+  },
+  { immediate: true },
+)
 
 const saving = ref(false)
 const error = ref('')
@@ -54,7 +58,11 @@ async function submit() {
         <UForm :state="formState" @submit="submit">
           <div class="form-section">
             <UFormField label="Business name (optional)" name="businessName">
-              <UInput v-model="formState.businessName" placeholder="My Freelance Co" class="w-full" />
+              <UInput
+                v-model="formState.businessName"
+                placeholder="My Freelance Co"
+                class="w-full"
+              />
             </UFormField>
             <UFormField label="Business address (optional)" name="businessAddress">
               <UTextarea
