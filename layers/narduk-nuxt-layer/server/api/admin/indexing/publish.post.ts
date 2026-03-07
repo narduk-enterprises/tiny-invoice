@@ -23,6 +23,7 @@ const bodySchema = z.object({
  *     -d '{"url": "https://your-site.com/jobs/42", "type": "URL_UPDATED"}'
  */
 export default defineEventHandler(async (event) => {
+  const log = useLogger(event).child('Indexing')
   await requireAdmin(event)
   await enforceRateLimit(event, 'google-indexing-publish', 10, 60_000)
 
@@ -48,6 +49,8 @@ export default defineEventHandler(async (event) => {
       },
     )
 
+    log.info('URL published to indexing', { url, type })
+
     return {
       success: true,
       url,
@@ -56,6 +59,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: unknown) {
     const err = error as { statusCode?: number; statusMessage?: string; message?: string }
+    log.error('URL publish failed', { url, error: err.statusMessage || err.message })
     throw createError({
       statusCode: err.statusCode || 500,
       statusMessage: `Google Indexing API error: ${err.statusMessage || err.message}`,
