@@ -1,5 +1,4 @@
 import type { MaybeRef, Ref } from 'vue'
-import { computed, isRef, ref } from 'vue'
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue'
 
@@ -116,7 +115,7 @@ export function useInvoices() {
 
 /* Normalize MaybeRef to Ref; ref() in branch is intentional */
 function toRefOrIdentity(r: MaybeRef<string>): Ref<string> {
-  // eslint-disable-next-line vue-official/no-composable-conditional-hooks -- normalize ref vs value
+  // eslint-disable-next-line narduk/no-composable-conditional-hooks -- normalize ref vs value
   return isRef(r) ? r : ref(r)
 }
 
@@ -125,6 +124,6 @@ export function useInvoiceDetail(invoiceId: MaybeRef<string>) {
   const key = computed(() => `invoice-${idRef.value}`)
   const headers = useRequestHeaders(['cookie'])
   const fetcher = () => $fetch<InvoiceDetail>(`/api/invoices/${idRef.value}`, { headers })
-  /* eslint-disable-next-line nuxt-guardrails/valid-useAsyncData -- reactive key required for route param */
+  /* eslint-disable-next-line narduk/valid-useAsyncData -- reactive key required for route param */
   return useAsyncData(key, fetcher, { watch: [idRef] })
 }
