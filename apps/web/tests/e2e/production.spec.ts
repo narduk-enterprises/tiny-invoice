@@ -3,12 +3,14 @@
  * Run locally: pnpm run db:ready && pnpm test:e2e
  * Run vs production: BASE_URL=https://tiny-invoice.nard.uk pnpm test:e2e
  */
-import { test, expect } from '@playwright/test'
+import * as playwright from '@playwright/test'
 
 const DEMO_EMAIL = 'demo@tinyinvoice.com'
 const DEMO_PASSWORD = 'demo1234'
 
-async function loginAsDemo(page: import('@playwright/test').Page) {
+const { test, expect } = playwright
+
+async function loginAsDemo(page: playwright.Page) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' })
   const emailInput = page.getByRole('textbox', { name: /email/i }).or(page.locator('input[type="email"]')).first()
   await emailInput.waitFor({ state: 'visible', timeout: 15_000 })

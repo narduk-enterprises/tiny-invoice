@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { getCookie, setCookie, deleteCookie, getRequestURL } from 'h3'
 import { and, eq, gt } from 'drizzle-orm'
-import { sessions, users } from '../database/schema'
-import { useAppDatabase } from './database'
+import { sessions, users } from '#server/database/schema'
+import { useAppDatabase } from '#server/utils/database'
 
 const SESSION_COOKIE = 'tiny_invoice_session'
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days

@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm'
-import { invoices, lineItems, clients } from '../../database/schema'
-import { requireAuth } from '../../utils/requireAuth'
-import { useAppDatabase } from '../../utils/database'
+import { invoices, lineItems, clients } from '#server/database/schema'
+import { requireAuth } from '#server/utils/requireAuth'
+import { useAppDatabase } from '#server/utils/database'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)

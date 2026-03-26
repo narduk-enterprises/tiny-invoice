@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { drizzle, type DrizzleD1Database } from 'drizzle-orm/d1'
-import * as schema from '../database/schema'
+import * as schema from '#server/database/schema'
 
 /**
  * Drizzle ORM for the app schema (users, sessions, clients, invoices, lineItems).
