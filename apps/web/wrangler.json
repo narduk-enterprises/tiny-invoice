@@ -20,6 +20,16 @@
     }
   ],
   "routes": [
-    { "pattern": "tiny-invoice.nard.uk", "custom_domain": true }
+    {
+      "pattern": "tiny-invoice.nard.uk",
+      "custom_domain": true
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "00000000000000000000000000000000",
+      "preview_id": "00000000000000000000000000000000"
+    }
   ]
 }
